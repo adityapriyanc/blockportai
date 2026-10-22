@@ -404,7 +404,10 @@ def blockchain_verify_record(payload: Dict[str, Any] = Body(...)) -> dict:
             "tampered": True,
             "computed_hash": computed_hash,
             "canonical_json": canonical_json(record_data),
-            "message": "TAMPERING DETECTED! Computed record hash does not match any anchored on-chain block.",
+            "message": (
+                "TAMPERING DETECTED! Computed record hash does not match "
+                "any anchored on-chain block."
+            ),
         }
 
 
