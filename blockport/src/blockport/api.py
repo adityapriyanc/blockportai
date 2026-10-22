@@ -69,6 +69,7 @@ def _get_live_section7_data():
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health() -> dict:
     return {"status": "ok", "version": __version__}
 
