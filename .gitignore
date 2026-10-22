@@ -9,3 +9,4 @@ node_modules/
 *.egg-info/
 models/
 .DS_Store
+~$*

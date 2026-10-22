@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
+from .architecture import architecture_pipeline
 from .blockchain.auditor import BlockchainAuditor
 from .blockchain.ledger import BlockPortLedger
 from .config import get_settings
@@ -742,6 +743,93 @@ def list_scenarios() -> dict:
                 "co2_savings": "Promotes slow steaming",
             },
         ]
+    }
+
+
+# ============================================================================
+# SECTION 6 ARCHITECTURE PIPELINE ENDPOINTS (LAYERS 1 -> 2 -> 3 -> 4 -> 5)
+# ============================================================================
+
+@app.get("/api/architecture/spec")
+def get_architecture_spec():
+    """Return Section 6 5-layer architecture specification."""
+    return architecture_pipeline.get_layers_metadata()
+
+
+@app.get("/api/architecture/layers")
+def get_architecture_layers():
+    """Return live status, active metrics, and components for all 5 layers."""
+    res = architecture_pipeline.latest_result or architecture_pipeline.execute_pipeline()
+    return {
+        "flow_summary": res.flow_diagram,
+        "last_executed_utc": res.executed_at_utc,
+        "total_latency_ms": res.total_duration_ms,
+        "layers": [
+            {
+                "layer_number": s.layer_number,
+                "layer_name": s.layer_name,
+                "subtitle": s.subtitle,
+                "status": s.status,
+                "duration_ms": s.duration_ms,
+                "summary": s.summary,
+                "payload": s.payload,
+            }
+            for s in res.steps
+        ],
+    }
+
+
+@app.post("/api/architecture/pipeline/run")
+def run_architecture_pipeline(body: Optional[Dict[str, Any]] = None):
+    """Execute end-to-end 5-layer coordinated pipeline: L1 -> L2 -> L3 -> L4 -> L5."""
+    scenario = (body or {}).get("scenario", "section7")
+    operator = (body or {}).get("operator", "Harbor_Master_Davis")
+    result = architecture_pipeline.execute_pipeline(scenario=scenario, operator=operator)
+    return {
+        "pipeline_id": result.pipeline_id,
+        "executed_at_utc": result.executed_at_utc,
+        "scenario": result.scenario,
+        "total_duration_ms": result.total_duration_ms,
+        "all_layers_succeeded": result.all_layers_succeeded,
+        "flow_diagram": result.flow_diagram,
+        "steps": [
+            {
+                "layer_number": s.layer_number,
+                "layer_name": s.layer_name,
+                "subtitle": s.subtitle,
+                "status": s.status,
+                "duration_ms": s.duration_ms,
+                "summary": s.summary,
+                "payload": s.payload,
+            }
+            for s in result.steps
+        ],
+    }
+
+
+@app.get("/api/architecture/pipeline/latest")
+def get_latest_pipeline_run():
+    """Retrieve the latest pipeline execution result."""
+    result = architecture_pipeline.latest_result or architecture_pipeline.execute_pipeline()
+    return {
+        "pipeline_id": result.pipeline_id,
+        "executed_at_utc": result.executed_at_utc,
+        "scenario": result.scenario,
+        "total_duration_ms": result.total_duration_ms,
+        "all_layers_succeeded": result.all_layers_succeeded,
+        "flow_diagram": result.flow_diagram,
+        "steps": [
+            {
+                "layer_number": s.layer_number,
+                "layer_name": s.layer_name,
+                "subtitle": s.subtitle,
+                "status": s.status,
+                "duration_ms": s.duration_ms,
+                "summary": s.summary,
+                "payload": s.payload,
+            }
+            for s in result.steps
+        ],
     }
 
 

@@ -929,6 +929,107 @@
       margin-top: 8px;
     }
 
+    /* ARCHITECTURE MODAL & PIPELINE FLOW STYLES */
+    .arch-flow-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin: 14px 0;
+      position: relative;
+    }
+    .arch-layer-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      transition: all 0.25s ease;
+    }
+    .arch-layer-card.active-layer {
+      border-color: var(--cyan);
+      background: rgba(6, 182, 212, 0.08);
+      box-shadow: 0 0 16px var(--cyan-glow);
+    }
+    .arch-layer-card.running-layer {
+      border-color: var(--amber);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+      animation: pulseLayer 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes pulseLayer {
+      from { transform: scale(1); }
+      to { transform: scale(1.02); }
+    }
+    .arch-layer-num {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--cyan);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .arch-layer-title {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+      color: #fff;
+    }
+    .arch-layer-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+    .arch-layer-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.35;
+      margin-top: 2px;
+    }
+    .arch-layer-metric-pill {
+      margin-top: auto;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      padding: 4px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+    }
+    .arch-flow-summary-banner {
+      background: rgba(6, 182, 212, 0.06);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .arch-flow-summary-banner strong {
+      color: var(--cyan);
+      font-family: var(--font-mono);
+    }
+    .arch-payload-inspector {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: #94a3b8;
+      max-height: 160px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
     /* TOAST NOTIFICATION */
     .toast-pill {
       position: fixed;
@@ -1002,6 +1103,9 @@
 
     <!-- QUICK ACTIONS -->
     <div class="header-actions">
+      <button class="btn-action" onclick="openArchitectureModal()" style="background: rgba(6, 182, 212, 0.15); border-color: var(--cyan); color: #fff;">
+        <span>&#9881;</span> 5-Layer Architecture
+      </button>
       <button class="btn-action btn-action-primary" onclick="openModal('modal-dispatch')">
         <span>+</span> Dispatch Vessel
       </button>
@@ -1581,6 +1685,150 @@
       </table>
       <div class="modal-actions-footer">
         <button class="btn-action" onclick="closeModal('modal-scorecard')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: 5-LAYER ARCHITECTURE EXPLORER -->
+  <div class="modal-backdrop" id="modal-architecture">
+    <div class="modal-window" style="max-width: 980px;">
+      <div class="modal-head-row">
+        <div>
+          <div class="modal-title-txt">&#9881; Proposed Model: The BlockPort AI Architecture (Report &sect;6)</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">
+            A stack of five loosely coupled layers coordinating autonomous maritime port intelligence.
+          </div>
+        </div>
+        <button class="btn-close-x" onclick="closeModal('modal-architecture')">&#10006;</button>
+      </div>
+
+      <!-- Flow Summary Banner -->
+      <div class="arch-flow-summary-banner">
+        <span>&#10140;</span>
+        <div>
+          <strong>Summarized Information Flow:</strong>
+          <span>Layer 1 sensors &rarr; Layer 2 predictive engine &rarr; Layer 3 Digital Twin &rarr; Layer 4 blockchain &rarr; Layer 5 human manager.</span>
+        </div>
+      </div>
+
+      <!-- 5-Layer Grid -->
+      <div class="arch-flow-grid" id="arch-cards-container">
+        <!-- Layer 1 -->
+        <div class="arch-layer-card" id="arch-card-1">
+          <div class="arch-layer-num">
+            <span>LAYER 1</span>
+            <span>&sect;6.1</span>
+          </div>
+          <div class="arch-layer-title">Sensing &amp; Ingestion</div>
+          <div class="arch-layer-sub">&ldquo;Eyes and Ears&rdquo;</div>
+          <div class="arch-layer-desc">
+            IoT gantry sensors, AIS vessel tracks, and metocean tide/current APIs. Reconciles timestamps, validates schemas, quarantines stale data.
+          </div>
+          <div class="arch-layer-metric-pill">
+            <span>Sensors / Feeds</span>
+            <span style="color: var(--cyan);" id="arch-m-l1">18 IoT &bull; 3 AIS</span>
+          </div>
+          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-1">0.3 ms</div>
+        </div>
+
+        <!-- Layer 2 -->
+        <div class="arch-layer-card" id="arch-card-2">
+          <div class="arch-layer-num">
+            <span>LAYER 2</span>
+            <span>&sect;6.2</span>
+          </div>
+          <div class="arch-layer-title">Predictive Engine</div>
+          <div class="arch-layer-sub">&ldquo;Forecaster&rdquo;</div>
+          <div class="arch-layer-desc">
+            ML HistGradientBoosting Quantile model estimating arrival distributions (p10/p50/p90). Forecasts burst congestion ahead of decisions.
+          </div>
+          <div class="arch-layer-metric-pill">
+            <span>ETA Accuracy</span>
+            <span style="color: var(--emerald);" id="arch-m-l2">11.54 min MAE</span>
+          </div>
+          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-2">1.2 ms</div>
+        </div>
+
+        <!-- Layer 3 -->
+        <div class="arch-layer-card" id="arch-card-3">
+          <div class="arch-layer-num">
+            <span>LAYER 3</span>
+            <span>&sect;6.3</span>
+          </div>
+          <div class="arch-layer-title">Digital Twin &amp; Optimizer</div>
+          <div class="arch-layer-sub">&ldquo;Virtual Sandbox&rdquo;</div>
+          <div class="arch-layer-desc">
+            Live discrete-event simulation. Tests alternative berth reassignments. Multi-objective optimizer: Min J = &alpha;T + &beta;C + &gamma;E.
+          </div>
+          <div class="arch-layer-metric-pill">
+            <span>Wait &amp; CO2</span>
+            <span style="color: var(--emerald);" id="arch-m-l3">12.0h &bull; -13.8%</span>
+          </div>
+          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-3">18.5 ms</div>
+        </div>
+
+        <!-- Layer 4 -->
+        <div class="arch-layer-card" id="arch-card-4">
+          <div class="arch-layer-num">
+            <span>LAYER 4</span>
+            <span>&sect;6.4</span>
+          </div>
+          <div class="arch-layer-title">Blockchain Trust</div>
+          <div class="arch-layer-sub">&ldquo;Permanent Record&rdquo;</div>
+          <div class="arch-layer-desc">
+            Hybrid on/off-chain storage. RFC 8785 canonical JSON digests and RFC 6962 SHA-256 Merkle root anchoring prevent database tampering.
+          </div>
+          <div class="arch-layer-metric-pill">
+            <span>Ledger Proof</span>
+            <span style="color: #c4b5fd;" id="arch-m-l4">Merkle Root Verified</span>
+          </div>
+          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-4">0.4 ms</div>
+        </div>
+
+        <!-- Layer 5 -->
+        <div class="arch-layer-card" id="arch-card-5">
+          <div class="arch-layer-num">
+            <span>LAYER 5</span>
+            <span>&sect;6.5</span>
+          </div>
+          <div class="arch-layer-title">AI Port Copilot</div>
+          <div class="arch-layer-sub">&ldquo;Human Interface&rdquo;</div>
+          <div class="arch-layer-desc">
+            Explainable cards for port personnel with physical constraint proofs (LOA, UKC, Cranes). Human manager reviews and approves/modifies/rejects.
+          </div>
+          <div class="arch-layer-metric-pill">
+            <span>Governance</span>
+            <span style="color: var(--cyan);" id="arch-m-l5">96% Conf &bull; HITL</span>
+          </div>
+          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-5">0.1 ms</div>
+        </div>
+      </div>
+
+      <!-- Live Execution Controls & Output Trace -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="btn-action btn-action-primary" id="btn-run-pipeline" onclick="executeArchitecturePipelineLive()">
+            <span>&#9654;</span> Execute End-to-End Coordinated Pipeline
+          </button>
+          <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-dim);" id="pipeline-status-text">
+            Ready to execute full 5-layer pipeline
+          </span>
+        </div>
+        <button class="btn-action" onclick="togglePayloadInspector()">
+          <span>&#128065;</span> <span id="btn-inspect-txt">View Layer Payloads</span>
+        </button>
+      </div>
+
+      <!-- Collapsible Layer Payload Inspector -->
+      <div id="arch-payload-box" style="display: none; margin-top: 10px;">
+        <div style="font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px;">
+          Inspected Data Payloads Passing Between Layers:
+        </div>
+        <pre class="arch-payload-inspector" id="arch-payload-pre">{}</pre>
+      </div>
+
+      <div class="modal-actions-footer">
+        <button class="btn-action" onclick="closeModal('modal-architecture')">Close</button>
       </div>
     </div>
   </div>
@@ -2337,6 +2585,88 @@
         `).join('');
       } catch (e) {
         console.error(e);
+      }
+    }
+
+    // 5-LAYER ARCHITECTURE MODAL & PIPELINE RUNNER (REPORT §6)
+    async function openArchitectureModal() {
+      openModal('modal-architecture');
+      try {
+        const res = await fetch('/api/architecture/layers');
+        const data = await res.json();
+        if (data && data.layers) {
+          updateArchitectureCards(data);
+        }
+      } catch (e) {
+        console.error('Failed to load layers:', e);
+      }
+    }
+
+    function updateArchitectureCards(data) {
+      if (!data || !data.layers) return;
+      data.layers.forEach(l => {
+        const lat = document.getElementById(`arch-lat-${l.layer_number}`);
+        if (lat) lat.innerText = `${l.duration_ms} ms`;
+      });
+      document.getElementById('pipeline-status-text').innerHTML =
+        `<strong style="color: var(--emerald);">&#10003; Coordinated Trace Active</strong> &bull; Latency: <strong>${data.total_latency_ms} ms</strong>`;
+      document.getElementById('arch-payload-pre').innerText = JSON.stringify(data.layers, null, 2);
+    }
+
+    async function executeArchitecturePipelineLive() {
+      const btn = document.getElementById('btn-run-pipeline');
+      const statusTxt = document.getElementById('pipeline-status-text');
+      btn.disabled = true;
+      statusTxt.innerText = 'Executing: L1 Sensors -> L2 Forecaster -> L3 Digital Twin -> L4 Blockchain -> L5 Copilot...';
+
+      // Visual pulse through layer cards
+      for (let i = 1; i <= 5; i++) {
+        document.querySelectorAll('.arch-layer-card').forEach(c => c.classList.remove('running-layer'));
+        const card = document.getElementById(`arch-card-${i}`);
+        if (card) card.classList.add('running-layer');
+        await new Promise(r => setTimeout(r, 100));
+      }
+
+      try {
+        const res = await fetch('/api/architecture/pipeline/run', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ scenario: 'section7', operator: 'Harbor_Master_Davis' })
+        });
+        const data = await res.json();
+
+        document.querySelectorAll('.arch-layer-card').forEach(c => {
+          c.classList.remove('running-layer');
+          c.classList.add('active-layer');
+        });
+
+        if (data.steps) {
+          data.steps.forEach(s => {
+            const lat = document.getElementById(`arch-lat-${s.layer_number}`);
+            if (lat) lat.innerText = `${s.duration_ms} ms`;
+          });
+        }
+
+        statusTxt.innerHTML =
+          `<strong style="color: var(--emerald);">&#10003; 5/5 Layers Coordinated!</strong> &bull; Total Latency: <strong>${data.total_duration_ms} ms</strong>`;
+        document.getElementById('arch-payload-pre').innerText = JSON.stringify(data, null, 2);
+        showToast(`5-Layer Pipeline executed in ${data.total_duration_ms} ms!`, '&#9881;');
+      } catch (err) {
+        statusTxt.innerText = 'Pipeline error: ' + err;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function togglePayloadInspector() {
+      const box = document.getElementById('arch-payload-box');
+      const btnTxt = document.getElementById('btn-inspect-txt');
+      if (box.style.display === 'none') {
+        box.style.display = 'block';
+        btnTxt.innerText = 'Hide Payloads';
+      } else {
+        box.style.display = 'none';
+        btnTxt.innerText = 'View Layer Payloads';
       }
     }
 
