@@ -74,6 +74,25 @@ def health() -> dict:
     return {"status": "ok", "version": __version__}
 
 
+@app.get("/api/sos")
+def emergency_sos_status() -> dict:
+    """Maritime distress, emergency channel, and port safety readiness endpoint."""
+    return {
+        "status": "CLEAR",
+        "emergency_channel": "VHF Ch 16 (156.800 MHz)",
+        "harbor_patrol_active": True,
+        "active_disruptions": [
+            {
+                "id": d.disruption_id,
+                "kind": d.kind,
+                "description": d.description,
+            }
+            for d in dynamic_engine.active_disruptions
+        ],
+        "storm_warning": (dynamic_engine.weather_condition == "GALE_WARNING"),
+    }
+
+
 @app.get("/config/targets")
 def targets() -> dict:
     """Proposed §3 targets (goals, not achieved results)."""
