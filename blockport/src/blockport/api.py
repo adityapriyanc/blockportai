@@ -16,6 +16,7 @@ from .blockchain.ledger import BlockPortLedger
 from .config import get_settings
 from .copilot.generator import PortCopilot
 from .copilot.workflow import GovernanceWorkflow
+from .dynamic import DynamicPortEngine
 from .green.estimator import GreenPortIntelligence
 from .green.tradeoffs import evaluate_tradeoffs
 from .optimizer.optimizer import BerthOptimizer
@@ -39,6 +40,7 @@ workflow = GovernanceWorkflow(ledger=ledger)
 copilot = PortCopilot()
 optimizer = BerthOptimizer()
 green_engine = GreenPortIntelligence()
+dynamic_engine = DynamicPortEngine(ledger=ledger)
 
 
 def _get_live_section7_data():
@@ -74,6 +76,64 @@ def health() -> dict:
 def targets() -> dict:
     """Proposed §3 targets (goals, not achieved results)."""
     return get_settings().targets.model_dump()
+
+
+@app.get("/api/dynamic/state")
+def get_dynamic_state(shore_power: bool = True) -> dict:
+    """Fetch current live dynamic port operations state across all berths and vessels."""
+    return dynamic_engine.compute_state(shore_power=shore_power)
+
+
+@app.post("/api/dynamic/preset")
+def set_dynamic_preset(payload: Dict[str, Any] = Body(...)) -> dict:
+    """Switch active operational scenario preset."""
+    preset = payload.get("preset", "section7")
+    dynamic_engine.reset_to_preset(preset)
+    return dynamic_engine.compute_state()
+
+
+@app.post("/api/dynamic/add-vessel")
+def dynamic_add_vessel(payload: Dict[str, Any] = Body(...)) -> dict:
+    """Dispatch and schedule an ad-hoc custom vessel call dynamically."""
+    name = payload.get("name", "MV Ad-Hoc Express")
+    vessel_type = payload.get("vessel_type", "container")
+    loa_m = float(payload.get("loa_m", 300.0))
+    draft_m = float(payload.get("draft_m", 12.0))
+    cargo_units = float(payload.get("cargo_units", 1000.0))
+    arrival_hour = float(payload.get("arrival_hour", 8.0))
+    allowed_berths = payload.get("allowed_berths")
+
+    dynamic_engine.add_custom_vessel(
+        name=name,
+        vessel_type_str=vessel_type,
+        loa_m=loa_m,
+        draft_m=draft_m,
+        cargo_units=cargo_units,
+        arrival_hour=arrival_hour,
+        allowed_berths=allowed_berths,
+    )
+    return dynamic_engine.compute_state()
+
+
+@app.post("/api/dynamic/disruption")
+def dynamic_inject_disruption(payload: Dict[str, Any] = Body(...)) -> dict:
+    """Inject an operational disruption (crane breakdown, berth maintenance, storm)."""
+    kind = payload.get("kind", "CRANE_OUTAGE")
+    target_berth = payload.get("target_berth")
+    cranes = payload.get("cranes", 2)
+    start_hour = payload.get("start_hour", 8.0)
+    end_hour = payload.get("end_hour", 18.0)
+    wind_speed = payload.get("wind_speed", 45.0)
+
+    dynamic_engine.apply_disruption(
+        kind=kind,
+        target_berth=target_berth,
+        cranes=cranes,
+        start_hour=start_hour,
+        end_hour=end_hour,
+        wind_speed=wind_speed,
+    )
+    return dynamic_engine.compute_state()
 
 
 @app.get("/api/status")
@@ -515,6 +575,173 @@ def evaluation_scorecard() -> dict:
             },
         ],
         "all_targets_met": True,
+    }
+
+
+@app.get("/api/berths/schedule")
+def berths_schedule(scenario: str = "b") -> dict:
+    """Return 24-hour Gantt allocation timeline for all berths across scenarios."""
+    is_option_b = (scenario.lower() == "b")
+
+    allocations = [
+        {
+            "berth": "A1",
+            "terminal": "Terminal A",
+            "vessel": "MV Early One",
+            "cargo_type": "Container",
+            "teu": "1,200 TEU",
+            "start_hour": 8.0,
+            "end_hour": 20.0,
+            "cranes": 4,
+            "status": "DOCKED",
+            "color": "#0284c7",
+            "shore_power": False,
+            "wait_hours": 0.0,
+        },
+        {
+            "berth": "A2",
+            "terminal": "Terminal A",
+            "vessel": "MV Early Two",
+            "cargo_type": "Container",
+            "teu": "1,200 TEU",
+            "start_hour": 8.0,
+            "end_hour": 20.0,
+            "cranes": 4,
+            "status": "DOCKED",
+            "color": "#2563eb",
+            "shore_power": False,
+            "wait_hours": 0.0,
+        },
+        {
+            "berth": "C1",
+            "terminal": "Terminal C",
+            "vessel": "MV Baltic Titan",
+            "cargo_type": "Dry Bulk",
+            "teu": "65k T Ore",
+            "start_hour": 6.0,
+            "end_hour": 22.0,
+            "cranes": 1,
+            "status": "DISCHARGING",
+            "color": "#d97706",
+            "shore_power": False,
+            "wait_hours": 0.0,
+        },
+        {
+            "berth": "C2",
+            "terminal": "Terminal C",
+            "vessel": "MT Arctic Spirit",
+            "cargo_type": "LNG Energy",
+            "teu": "90k m³ LNG",
+            "start_hour": 4.0,
+            "end_hour": 18.0,
+            "cranes": 1,
+            "status": "PUMPING",
+            "color": "#7c3aed",
+            "shore_power": False,
+            "wait_hours": 0.0,
+        },
+    ]
+
+    if is_option_b:
+        allocations.append({
+            "berth": "B1",
+            "terminal": "Terminal B",
+            "vessel": "MV Delayed",
+            "cargo_type": "Container",
+            "teu": "960 TEU",
+            "start_hour": 8.0,
+            "end_hour": 20.0,
+            "cranes": 3,
+            "status": "OPTIMIZED_DOCK",
+            "color": "#059669",
+            "shore_power": True,
+            "wait_hours": 0.0,
+        })
+    else:
+        allocations.append({
+            "berth": "A1",
+            "terminal": "Terminal A",
+            "vessel": "MV Delayed (Post-Wait)",
+            "cargo_type": "Container",
+            "teu": "960 TEU",
+            "start_hour": 20.0,
+            "end_hour": 24.0,
+            "cranes": 4,
+            "status": "POST_DELAY_DOCK",
+            "color": "#e11d48",
+            "shore_power": False,
+            "wait_hours": 12.0,
+        })
+
+    sc_label = (
+        "Option B (Optimized Reassignment)"
+        if is_option_b
+        else "Option A (FCFS Queue Delay)"
+    )
+    return {
+        "scenario": sc_label,
+        "window_hours": 24,
+        "timeline_start": "00:00 UTC",
+        "timeline_end": "24:00 UTC",
+        "berths": ["A1", "A2", "B1", "B2", "C1", "C2"],
+        "allocations": allocations,
+    }
+
+
+@app.post("/api/copilot/reset")
+def copilot_reset() -> dict:
+    """Reset copilot recommendation state to PENDING for testing review governance."""
+    opt_res, vessels, berths = _get_live_section7_data()
+    rec = copilot.generate_recommendation(
+        recommendation_id=1,
+        opt_result=opt_res,
+        vessels=vessels,
+        berths=berths,
+        eta_confidence_band={"p10": "07:45 UTC", "p50": "08:00 UTC", "p90": "08:20 UTC"},
+    )
+    workflow._recommendations[1] = rec
+    return {"status": "reset", "recommendation_id": 1, "state": "PENDING"}
+
+
+@app.get("/api/scenarios/list")
+def list_scenarios() -> dict:
+    """List available Digital Twin what-if scenarios."""
+    return {
+        "scenarios": [
+            {
+                "id": "section7_option_b",
+                "name": "Berth Reassignment (Section 7)",
+                "description": (
+                    "Dynamic reassignment of MV Delayed from congested Terminal A "
+                    "to idle Berth B1 with cold-ironing shore power."
+                ),
+                "wait_savings": "12.0 hours (100% reduction)",
+                "cost_savings": "$14,400 demurrage saved",
+                "co2_savings": "13,678 kg CO2 cut (13.8%)",
+            },
+            {
+                "id": "crane_outage",
+                "name": "Quay Crane Outage (50% Loss)",
+                "description": (
+                    "Sudden electrical fault at Terminal A reducing active STS cranes "
+                    "from 4 to 2, triggering speed adjustments and secondary berth spillover."
+                ),
+                "wait_savings": "Dynamic buffer rerouting",
+                "cost_savings": "Prevents catastrophic $45,000 demurrage cascading",
+                "co2_savings": "Maintains eco-routing",
+            },
+            {
+                "id": "arrival_delay",
+                "name": "Heavy Weather Approach Delay (+12h)",
+                "description": (
+                    "Incoming gale force winds delay median container vessel arrival by "
+                    "12 hours, freeing morning slots for advance feeder servicing."
+                ),
+                "wait_savings": "Early slot reallocation",
+                "cost_savings": "Zero idle berth waste",
+                "co2_savings": "Promotes slow steaming",
+            },
+        ]
     }
 
 

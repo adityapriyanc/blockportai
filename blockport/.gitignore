@@ -8,3 +8,4 @@ node_modules/
 .env
 *.egg-info/
 models/
+.DS_Store

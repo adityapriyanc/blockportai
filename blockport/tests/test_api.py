@@ -123,3 +123,83 @@ def test_api_realtime_blockchain_anchor_and_verify():
     assert res_tampered.json()["tampered"] is True
 
 
+def test_api_berths_schedule_and_reset():
+    client = TestClient(app)
+    # Test schedule option b
+    res_b = client.get("/api/berths/schedule?scenario=b")
+    assert res_b.status_code == 200
+    data_b = res_b.json()
+    assert "allocations" in data_b
+    assert any(a["berth"] == "B1" and a["vessel"] == "MV Delayed" for a in data_b["allocations"])
+
+    # Test schedule option a
+    res_a = client.get("/api/berths/schedule?scenario=a")
+    assert res_a.status_code == 200
+    data_a = res_a.json()
+    assert any(a["status"] == "POST_DELAY_DOCK" for a in data_a["allocations"])
+
+    # Test copilot reset
+    res_reset = client.post("/api/copilot/reset")
+    assert res_reset.status_code == 200
+    assert res_reset.json()["state"] == "PENDING"
+
+    # Test scenarios list
+    res_list = client.get("/api/scenarios/list")
+    assert res_list.status_code == 200
+    assert len(res_list.json()["scenarios"]) >= 3
+
+
+def test_api_dynamic_operations_flow():
+    client = TestClient(app)
+
+    # 1. Fetch dynamic state
+    res_state = client.get("/api/dynamic/state")
+    assert res_state.status_code == 200
+    state = res_state.json()
+    assert "vessels" in state
+    assert "berths" in state
+    assert "copilot" in state
+    assert "gantt" in state
+    init_vessel_count = len(state["vessels"])
+
+    # 2. Add custom ad-hoc vessel
+    res_add = client.post(
+        "/api/dynamic/add-vessel",
+        json={
+            "name": "MV Pacific Star",
+            "vessel_type": "container",
+            "loa_m": 310.0,
+            "draft_m": 12.5,
+            "cargo_units": 1400.0,
+            "arrival_hour": 9.5,
+        },
+    )
+    assert res_add.status_code == 200
+    state_after_add = res_add.json()
+    assert len(state_after_add["vessels"]) == init_vessel_count + 1
+
+    # 3. Inject weather storm disruption
+    res_storm = client.post(
+        "/api/dynamic/disruption",
+        json={
+            "kind": "WEATHER_STORM",
+            "wind_speed": 48.0,
+            "wave_height": 3.8,
+        },
+    )
+    assert res_storm.status_code == 200
+    state_storm = res_storm.json()
+    assert state_storm["weather"]["condition"] == "GALE_WARNING"
+
+    # 4. Switch preset back to section7
+    res_preset = client.post(
+        "/api/dynamic/preset",
+        json={"preset": "section7"},
+    )
+    assert res_preset.status_code == 200
+    state_preset = res_preset.json()
+    assert state_preset["kpis"]["total_wait_saved_hours"] == 12.0
+
+
+
+
