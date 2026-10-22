@@ -1,0 +1,25 @@
+# BlockPort AI default configuration (Report §5.4, §5.5).
+# All values are PLACEHOLDERS to be justified per port / evaluation scenario.
+
+objective_weights:        # J = alpha*T + beta*C + gamma*E  (report §5.4)
+  alpha: 1.0              # weight on total vessel waiting time T (hours)
+  beta: 0.001             # weight on operating cost C (USD)
+  gamma: 0.01             # weight on estimated emissions E (kg CO2)
+
+emission_factors:         # kg CO2 per unit; typical literature values, to be verified
+  marine_fuel_oil_kg_co2_per_kg_fuel: 3.114   # HFO, IMO MEPC.308(73)
+  marine_diesel_kg_co2_per_kg_fuel: 3.206     # MDO/MGO
+  grid_electricity_kg_co2_per_kwh: 0.45       # port-specific; replace with local grid factor
+  truck_diesel_kg_co2_per_litre: 2.68
+
+targets:                  # proposed targets from report §3 (not guaranteed outcomes)
+  eta_mae_minutes_max: 30
+  waiting_time_reduction_min_pct: 10
+  utilization_improvement_min_pct: 10
+  emissions_per_cargo_reduction_min_pct: 5
+  min_scenarios: 3
+  integrity_verification_rate_pct: 100
+
+data:
+  stale_after_minutes: 30      # ingestion discards readings older than this (report §6.1)
+  database_url: "sqlite:///./blockport.db"

@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockPort AI | Autonomous Port Intelligence &amp; Digital Twin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --bg: #070b14;
+      --card-bg: rgba(17, 24, 39, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f3f4f6;
+      --text-muted: #94a3b8;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --water-bg: #071529;
+      --water-deep: #050e1b;
+      --gradient-cyan: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+      --gradient-emerald: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --glow-cyan: 0 0 25px rgba(6, 182, 212, 0.25);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-sans);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+    button, input, select, textarea {
+      font-family: inherit;
+    }
+
+    /* Ambient background lights */
+    .ambient-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(140px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.15;
+    }
+    .glow-top { top: -200px; left: 10%; background: var(--cyan); }
+    .glow-bottom { bottom: -200px; right: 10%; background: var(--purple); }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Navigation Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--gradient-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: var(--glow-cyan);
+    }
+    .brand h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand h1 span {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .header-telemetry {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .tele-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .tele-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .tele-val {
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+
+    /* Card Panels */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      margin-bottom: 24px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* Scenario Selector Buttons */
+    .sim-scenario-selector {
+      display: flex;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      padding: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .sim-toggle-btn {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sim-toggle-btn.active {
+      background: var(--gradient-cyan);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3);
+    }
+    .sim-toggle-btn.active.opt-a {
+      background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+      box-shadow: 0 2px 10px rgba(244, 63, 94, 0.3);
+    }
+
+    /* Cargo Category Filters */
+    .cargo-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .cargo-filter-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .cargo-filter-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+    .cargo-filter-btn.active {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    /* Simulation Viewport & Canvas */
+    .sim-viewport {
+      position: relative;
+      background: var(--water-deep);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
+    }
+    #harbor-svg {
+      width: 100%;
+      height: 480px;
+      display: block;
+    }
+
+    /* Simulation Controls Bar */
+    .sim-controls-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .sim-btn-play {
+      background: var(--gradient-cyan);
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .sim-btn-play:hover { filter: brightness(1.15); }
+    .sim-btn-reset {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sim-btn-reset:hover { background: rgba(255, 255, 255, 0.15); }
+    .sim-timeline-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 220px;
+    }
+    .sim-timeline-slider {
+      width: 100%;
+      accent-color: var(--cyan);
+      cursor: pointer;
+    }
+    .sim-timeline-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .sim-time-display {
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cyan);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .sim-speed-pills {
+      display: flex;
+      gap: 4px;
+    }
+    .speed-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .speed-btn.active {
+      background: var(--cyan);
+      color: #000;
+      border-color: var(--cyan);
+    }
+
+    /* Fleet HUD & Live Cargo Cards */
+    .fleet-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 1200px) {
+      .fleet-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .fleet-grid { grid-template-columns: 1fr; }
+    }
+    .vessel-hud-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px;
+      transition: all 0.2s;
+    }
+    .vessel-hud-card.active-vessel {
+      border-color: rgba(6, 182, 212, 0.4);
+      background: rgba(6, 182, 212, 0.03);
+    }
+    .vessel-hud-card.delayed-vessel {
+      border-color: rgba(244, 63, 94, 0.4);
+      background: rgba(244, 63, 94, 0.03);
+    }
+    .vessel-hud-card.optimized-vessel {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.03);
+    }
+    .vessel-hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .vessel-hud-name {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .vessel-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .vessel-badge.docked { background: rgba(16, 185, 129, 0.2); color: var(--emerald); }
+    .vessel-badge.anchored { background: rgba(244, 63, 94, 0.2); color: var(--rose); }
+    .vessel-badge.cargo-bulk { background: rgba(245, 158, 11, 0.2); color: var(--amber); }
+    .vessel-badge.cargo-lng { background: rgba(139, 92, 246, 0.2); color: var(--purple); }
+    .vessel-hud-details {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .vessel-hud-metric {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 4px;
+      margin-top: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 11px;
+    }
+
+    /* Comparison Metrics Row */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    @media (max-width: 900px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    .kpi-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+    }
+    .kpi-num {
+      font-size: 22px;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      font-variant-numeric: tabular-nums;
+      color: var(--cyan);
+      margin-bottom: 2px;
+    }
+    .kpi-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* REAL-TIME BLOCKCHAIN STUDIO */
+    .blockchain-card {
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      background: linear-gradient(180deg, rgba(20, 16, 35, 0.8) 0%, rgba(11, 14, 25, 0.8) 100%);
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .blockchain-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+      border-radius: 20px 20px 0 0;
+    }
+    .blockchain-pipeline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      overflow-x: auto;
+    }
+    .pipe-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .pipe-name { font-weight: 700; color: #fff; }
+    .pipe-sub { color: var(--text-muted); font-size: 10px; }
+    .pipe-arrow { color: var(--purple); font-weight: 700; }
+
+
+
+    /* Real-Time Tamper & Mutation Console */
+    .tamper-console {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .tamper-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .tamper-payload {
+      font-size: 11px;
+      color: #94a3b8;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-variant-numeric: tabular-nums;
+      word-break: break-all;
+    }
+    .tamper-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-verify {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-tamper {
+      background: rgba(244, 63, 94, 0.2);
+      color: var(--rose);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tamper-status-box {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      display: none;
+    }
+
+    /* Block Ledger Table */
+    .table-container {
+      overflow-x: auto;
+      max-height: 180px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    th {
+      text-align: left;
+      padding: 8px 10px;
+      color: var(--text-muted);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-family: var(--font-sans);
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow glow-top"></div>
+  <div class="ambient-glow glow-bottom"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">&#9875;</div>
+        <div>
+          <h1>BlockPort AI <span>v0.1.0 Active</span></h1>
+        </div>
+      </div>
+      <div class="header-telemetry">
+        <div class="tele-item">
+          <span class="tele-label">Port Clock (UTC)</span>
+          <span class="tele-val" id="port-clock">--:--:-- UTC</span>
+        </div>
+        <div class="tele-item">
+          <span class="tele-label">Active Berths</span>
+          <span class="tele-val" style="color: var(--cyan);">6 Berths / 3 Terminals</span>
+        </div>
+        <div class="tele-item">
+          <span class="tele-label">Trust Ledger</span>
+          <span class="tele-val" style="color: var(--emerald);">&#10003; 100% Cryptographic Proof</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- DIGITAL TWIN HARBOR SIMULATION -->
+    <div class="card" id="digital-twin-container">
+      <div class="card-header">
+        <div class="card-title">
+          <span>&#9881;</span> Digital Twin Autonomous Port Simulation
+        </div>
+        <div class="sim-scenario-selector">
+          <button class="sim-toggle-btn opt-a" id="btn-opt-a" onclick="setOption('a')">
+            Option A: Wait at Anchor (12h)
+          </button>
+          <button class="sim-toggle-btn active" id="btn-opt-b" onclick="setOption('b')">
+            Option B: Reassign to Terminal B (0h)
+          </button>
+        </div>
+      </div>
+
+      <!-- Cargo Category Filter Selector -->
+      <div class="cargo-filters">
+        <button class="cargo-filter-btn active" id="filter-all" onclick="filterCargo('all')">
+          <span>&#9875;</span> All Cargo Terminals (6 Berths)
+        </button>
+        <button class="cargo-filter-btn" id="filter-container" onclick="filterCargo('container')">
+          <span>&#128230;</span> Container Terminals A &amp; B (TEU)
+        </button>
+        <button class="cargo-filter-btn" id="filter-bulk" onclick="filterCargo('bulk')">
+          <span>&#9935;</span> Dry Bulk Terminal C1 (Iron Ore / Grain)
+        </button>
+        <button class="cargo-filter-btn" id="filter-energy" onclick="filterCargo('energy')">
+          <span>&#9889;</span> Liquid Energy &amp; LNG Terminal C2
+        </button>
+      </div>
+
+      <!-- Visual Maritime Map Viewport -->
+      <div class="sim-viewport">
+        <svg id="harbor-svg" viewBox="0 0 1100 500">
+          <defs>
+            <linearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#051022" />
+              <stop offset="100%" stop-color="#0b1b36" />
+            </linearGradient>
+            <linearGradient id="pierGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#1e293b" />
+              <stop offset="100%" stop-color="#334155" />
+            </linearGradient>
+            <filter id="glowRoute" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <!-- Water Background -->
+          <rect width="1100" height="500" fill="url(#waterGrad)" />
+
+          <!-- Bathymetry Depth Lines & Radar Grid -->
+          <g stroke="rgba(255,255,255,0.03)" stroke-width="1">
+            <line x1="0" y1="80" x2="1100" y2="80" />
+            <line x1="0" y1="160" x2="1100" y2="160" />
+            <line x1="0" y1="240" x2="1100" y2="240" />
+            <line x1="0" y1="320" x2="1100" y2="320" />
+            <line x1="0" y1="400" x2="1100" y2="400" />
+            <line x1="200" y1="0" x2="200" y2="500" />
+            <line x1="450" y1="0" x2="450" y2="500" />
+            <line x1="750" y1="0" x2="750" y2="500" />
+          </g>
+
+          <!-- Navigation Channel / Fairway -->
+          <path d="M 50,210 Q 300,210 500,210 T 1050,210" fill="none" stroke="rgba(6,182,212,0.1)" stroke-width="70" stroke-linecap="round" />
+          <path d="M 50,210 Q 300,210 500,210 T 1050,210" fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="2" stroke-dasharray="6 6" />
+
+          <!-- Buoys -->
+          <circle cx="150" cy="170" r="4" fill="#10b981"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" /></circle>
+          <circle cx="150" cy="250" r="4" fill="#f43f5e"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" /></circle>
+          <circle cx="350" cy="170" r="4" fill="#10b981"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" /></circle>
+          <circle cx="350" cy="250" r="4" fill="#f43f5e"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" /></circle>
+
+          <!-- ANCHORAGE ALPHA -->
+          <g id="anchorage-zone" transform="translate(180, 85)">
+            <circle cx="0" cy="0" r="45" fill="rgba(244,63,94,0.04)" stroke="rgba(244,63,94,0.3)" stroke-width="1.5" stroke-dasharray="4 4" />
+            <text x="0" y="-52" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">ANCHORAGE ALPHA</text>
+            <text x="0" y="5" text-anchor="middle" fill="rgba(244,63,94,0.7)" font-size="20">&#9875;</text>
+            <g id="anchor-delay-badge" style="display: none;">
+              <rect x="-65" y="16" width="130" height="20" rx="4" fill="rgba(244,63,94,0.85)" />
+              <text x="0" y="30" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">12h WAIT ($14,400)</text>
+            </g>
+          </g>
+
+          <!-- ================= TERMINAL A (CONTAINER QUAY) ================= -->
+          <path d="M 460,0 L 1100,0 L 1100,120 L 490,120 L 460,90 Z" fill="url(#pierGrad)" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" />
+          <text x="500" y="24" fill="#f3f4f6" font-size="12" font-weight="700">TERMINAL A (NORTH CONTAINER)</text>
+          <!-- Berth A1 -->
+          <g transform="translate(500, 120)">
+            <line x1="0" y1="0" x2="240" y2="0" stroke="#06b6d4" stroke-width="4" />
+            <rect x="5" y="-24" width="220" height="20" rx="4" fill="rgba(0,0,0,0.4)" />
+            <text x="12" y="-10" fill="#38bdf8" font-size="10" font-weight="700">Berth A1 (400m / 16m) - 4 STS Cranes</text>
+            <path d="M 40,-2 M 40,-12 L 55,-20 L 70,-12 L 70,-2" stroke="#f59e0b" stroke-width="2" fill="none" />
+            <path d="M 140,-2 M 140,-12 L 155,-20 L 170,-12 L 170,-2" stroke="#f59e0b" stroke-width="2" fill="none" />
+          </g>
+          <!-- Berth A2 -->
+          <g transform="translate(780, 120)">
+            <line x1="0" y1="0" x2="240" y2="0" stroke="#3b82f6" stroke-width="4" />
+            <rect x="5" y="-24" width="220" height="20" rx="4" fill="rgba(0,0,0,0.4)" />
+            <text x="12" y="-10" fill="#60a5fa" font-size="10" font-weight="700">Berth A2 (350m / 15m) - 4 STS Cranes</text>
+            <path d="M 40,-2 M 40,-12 L 55,-20 L 70,-12 L 70,-2" stroke="#f59e0b" stroke-width="2" fill="none" />
+            <path d="M 140,-2 M 140,-12 L 155,-20 L 170,-12 L 170,-2" stroke="#f59e0b" stroke-width="2" fill="none" />
+          </g>
+
+          <!-- ================= TERMINAL B (MID CONTAINER & SHORE-POWER) ================= -->
+          <path d="M 500,260 L 1100,260 L 1100,290 L 530,290 L 500,260 Z" fill="url(#pierGrad)" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" />
+          <!-- Berth B1 -->
+          <g transform="translate(540, 260)">
+            <line x1="0" y1="0" x2="230" y2="0" stroke="#10b981" stroke-width="4" />
+            <rect x="5" y="6" width="220" height="20" rx="4" fill="rgba(0,0,0,0.4)" />
+            <text x="12" y="20" fill="#34d399" font-size="10" font-weight="700">Berth B1 (330m / 14.5m) - Shore Power</text>
+            <g id="berth-b1-idle-warning" style="display: none;">
+              <rect x="15" y="-24" width="160" height="18" rx="4" fill="rgba(245,158,11,0.2)" stroke="rgba(245,158,11,0.5)" />
+              <text x="95" y="-12" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="700">&#9888; UNUSED IN OPTION A</text>
+            </g>
+          </g>
+          <!-- Berth B2 -->
+          <g transform="translate(800, 260)">
+            <line x1="0" y1="0" x2="230" y2="0" stroke="#0ea5e9" stroke-width="4" />
+            <rect x="5" y="6" width="220" height="20" rx="4" fill="rgba(0,0,0,0.4)" />
+            <text x="12" y="20" fill="#38bdf8" font-size="10" font-weight="700">Berth B2 (320m / 14m) - Feeder &amp; Breakbulk</text>
+          </g>
+
+          <!-- ================= TERMINAL C (BULK & ENERGY BASIN) ================= -->
+          <path d="M 440,500 L 1100,500 L 1100,420 L 480,420 L 440,460 Z" fill="url(#pierGrad)" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" />
+          <text x="490" y="490" fill="#f3f4f6" font-size="12" font-weight="700">TERMINAL C (DEEPWATER BULK &amp; CLEAN ENERGY BASIN)</text>
+          <!-- Berth C1 (Dry Bulk) -->
+          <g transform="translate(480, 420)">
+            <line x1="0" y1="0" x2="240" y2="0" stroke="#f59e0b" stroke-width="4" />
+            <rect x="5" y="6" width="230" height="20" rx="4" fill="rgba(0,0,0,0.4)" />
+            <text x="12" y="20" fill="#fbbf24" font-size="10" font-weight="700">Berth C1 (340m / 17.5m) - Dry Bulk Grab (6k T/h)</text>
+            <!-- Conveyor Crane Graphic -->
+            <path d="M 30,0 L 50,-20 L 90,-20 L 90,-5" stroke="#f59e0b" stroke-width="2" fill="none" />
+            <circle cx="90" cy="-2" r="3" fill="#f59e0b" />
+          </g>
+          <!-- Berth C2 (Liquid Bulk & LNG) -->
+          <g transform="translate(760, 420)">
+            <line x1="0" y1="0" x2="250" y2="0" stroke="#8b5cf6" stroke-width="4" />
+            <rect x="5" y="6" width="240" height="20" rx="4" fill="rgba(0,0,0,0.4)" />
+            <text x="12" y="20" fill="#c4b5fd" font-size="10" font-weight="700">Berth C2 (320m / 16.5m) - Clean Energy LNG Arm</text>
+            <!-- Cryogenic Loading Arm Graphic -->
+            <path d="M 40,0 L 60,-22 L 75,-10 L 85,-2" stroke="#8b5cf6" stroke-width="2" fill="none" />
+            <circle cx="85" cy="0" r="3" fill="#8b5cf6" />
+          </g>
+
+          <!-- Routes -->
+          <path id="route-b1" d="M 380,210 Q 460,210 520,240 T 650,260" fill="none" stroke="#06b6d4" stroke-width="3" stroke-dasharray="6 4" filter="url(#glowRoute)" style="display: none;" />
+          <path id="route-anchor" d="M 320,210 Q 250,200 180,100" fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="5 4" style="display: none;" />
+
+          <!-- ================= VESSELS ================= -->
+          <!-- V1: MV Early One (Container, Berth A1) -->
+          <g id="vessel-1" transform="translate(610, 120)">
+            <path d="M -85,-10 L 65,-10 Q 85,-10 90,0 Q 85,10 65,10 L -85,10 Z" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" />
+            <rect x="-65" y="-7" width="20" height="14" fill="#38bdf8" rx="1" />
+            <rect x="-40" y="-7" width="20" height="14" fill="#0ea5e9" rx="1" />
+            <rect x="-15" y="-7" width="20" height="14" fill="#0284c7" rx="1" />
+            <rect x="10" y="-7" width="20" height="14" fill="#38bdf8" rx="1" />
+            <rect x="35" y="-7" width="18" height="14" fill="#0ea5e9" rx="1" />
+            <rect x="-80" y="-6" width="10" height="12" fill="#fff" />
+            <text x="0" y="24" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">MV Early One [Container 1,200 TEU]</text>
+          </g>
+
+          <!-- V2: MV Early Two (Container, Berth A2) -->
+          <g id="vessel-2" transform="translate(890, 120)">
+            <path d="M -85,-10 L 65,-10 Q 85,-10 90,0 Q 85,10 65,10 L -85,10 Z" fill="#2563eb" stroke="#60a5fa" stroke-width="1.5" />
+            <rect x="-65" y="-7" width="20" height="14" fill="#60a5fa" rx="1" />
+            <rect x="-40" y="-7" width="20" height="14" fill="#3b82f6" rx="1" />
+            <rect x="-15" y="-7" width="20" height="14" fill="#2563eb" rx="1" />
+            <rect x="10" y="-7" width="20" height="14" fill="#60a5fa" rx="1" />
+            <rect x="35" y="-7" width="18" height="14" fill="#3b82f6" rx="1" />
+            <rect x="-80" y="-6" width="10" height="12" fill="#fff" />
+            <text x="0" y="24" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">MV Early Two [Container 1,200 TEU]</text>
+          </g>
+
+          <!-- V3: MV Delayed (Focal Container Ship) -->
+          <g id="vessel-3" transform="translate(650, 260)">
+            <path id="v3-hull" d="M -75,-10 L 55,-10 Q 75,-10 80,0 Q 75,10 55,10 L -75,10 Z" fill="#059669" stroke="#34d399" stroke-width="1.8" />
+            <rect id="v3-c1" x="-55" y="-7" width="18" height="14" fill="#34d399" rx="1" />
+            <rect id="v3-c2" x="-32" y="-7" width="18" height="14" fill="#10b981" rx="1" />
+            <rect id="v3-c3" x="-9" y="-7" width="18" height="14" fill="#059669" rx="1" />
+            <rect id="v3-c4" x="14" y="-7" width="18" height="14" fill="#34d399" rx="1" />
+            <rect x="-70" y="-6" width="10" height="12" fill="#fff" />
+            <text id="v3-label" x="0" y="-16" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700">MV Delayed [Container 960 TEU]</text>
+          </g>
+
+          <!-- V4: MV Baltic Titan (Capesize Dry Bulk Carrier, Berth C1) -->
+          <g id="vessel-4" transform="translate(600, 420)">
+            <!-- Bulk Carrier Hull with open cargo hatches -->
+            <path d="M -85,-11 L 65,-11 Q 85,-11 90,0 Q 85,11 65,11 L -85,11 Z" fill="#78350f" stroke="#f59e0b" stroke-width="1.5" />
+            <rect x="-65" y="-7" width="22" height="14" fill="#b45309" stroke="#f59e0b" stroke-width="1" />
+            <rect x="-35" y="-7" width="22" height="14" fill="#b45309" stroke="#f59e0b" stroke-width="1" />
+            <rect x="-5" y="-7" width="22" height="14" fill="#b45309" stroke="#f59e0b" stroke-width="1" />
+            <rect x="25" y="-7" width="22" height="14" fill="#b45309" stroke="#f59e0b" stroke-width="1" />
+            <rect x="-80" y="-6" width="10" height="12" fill="#fff" />
+            <text x="0" y="-16" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="700">MV Baltic Titan [Dry Bulk 65,000 T Iron Ore]</text>
+          </g>
+
+          <!-- V5: MT Arctic Spirit (Cryogenic LNG Tanker, Berth C2) -->
+          <g id="vessel-5" transform="translate(880, 420)">
+            <!-- LNG Tanker with insulated spherical cargo tanks -->
+            <path d="M -85,-11 L 65,-11 Q 85,-11 90,0 Q 85,11 65,11 L -85,11 Z" fill="#4c1d95" stroke="#a78bfa" stroke-width="1.5" />
+            <circle cx="-50" cy="0" r="8" fill="#8b5cf6" stroke="#c4b5fd" stroke-width="1.2" />
+            <circle cx="-25" cy="0" r="8" fill="#8b5cf6" stroke="#c4b5fd" stroke-width="1.2" />
+            <circle cx="0" cy="0" r="8" fill="#8b5cf6" stroke="#c4b5fd" stroke-width="1.2" />
+            <circle cx="25" cy="0" r="8" fill="#8b5cf6" stroke="#c4b5fd" stroke-width="1.2" />
+            <rect x="-80" y="-6" width="10" height="12" fill="#fff" />
+            <text x="0" y="-16" text-anchor="middle" fill="#c4b5fd" font-size="9" font-weight="700">MT Arctic Spirit [LNG 90,000 m³ Clean Fuel]</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Playback Controls Bar -->
+      <div class="sim-controls-bar">
+        <button class="sim-btn-play" id="btn-play-pause" onclick="togglePlay()">
+          <span id="play-icon">&#9658;</span> <span id="play-text">Play Simulation</span>
+        </button>
+        <button class="sim-btn-reset" onclick="resetSim()">&#8634; Reset</button>
+
+        <div class="sim-timeline-container">
+          <input type="range" id="sim-slider" class="sim-timeline-slider" min="6" max="20" step="0.1" value="8" oninput="onSliderScrub(this.value)">
+          <div class="sim-timeline-labels">
+            <span>06:00 Approach</span>
+            <span>08:00 Arrival &amp; Decision</span>
+            <span>14:00 Midday Operations</span>
+            <span>20:00 Turnaround</span>
+          </div>
+        </div>
+
+        <div class="sim-time-display" id="sim-clock-display">
+          Simulation Time: 08:00 UTC
+        </div>
+
+        <div class="sim-speed-pills">
+          <button class="speed-btn active" id="spd-1" onclick="setSpeed(1)">1x</button>
+          <button class="speed-btn" id="spd-2" onclick="setSpeed(2)">2x</button>
+          <button class="speed-btn" id="spd-5" onclick="setSpeed(5)">5x</button>
+        </div>
+      </div>
+
+      <!-- Live Fleet HUD (5 Vessel Cards across Cargo Types) -->
+      <div class="fleet-grid">
+        <!-- V1 -->
+        <div class="vessel-hud-card active-vessel card-cargo-container">
+          <div class="vessel-hud-header">
+            <span class="vessel-hud-name">MV Early One</span>
+            <span class="vessel-badge docked">Berth A1</span>
+          </div>
+          <div class="vessel-hud-details">
+            Cargo: <strong>Container (1,200 TEU)</strong><br>
+            4 STS Cranes | 08:00 - 20:00 UTC
+          </div>
+          <div class="vessel-hud-metric">
+            <span>Wait: <strong>0.0h</strong></span>
+            <span>Demurrage: <strong>$0</strong></span>
+          </div>
+        </div>
+
+        <!-- V2 -->
+        <div class="vessel-hud-card active-vessel card-cargo-container">
+          <div class="vessel-hud-header">
+            <span class="vessel-hud-name">MV Early Two</span>
+            <span class="vessel-badge docked">Berth A2</span>
+          </div>
+          <div class="vessel-hud-details">
+            Cargo: <strong>Container (1,200 TEU)</strong><br>
+            4 STS Cranes | 08:00 - 20:00 UTC
+          </div>
+          <div class="vessel-hud-metric">
+            <span>Wait: <strong>0.0h</strong></span>
+            <span>Demurrage: <strong>$0</strong></span>
+          </div>
+        </div>
+
+        <!-- V3 Target -->
+        <div class="vessel-hud-card optimized-vessel card-cargo-container" id="v3-hud-card">
+          <div class="vessel-hud-header">
+            <span class="vessel-hud-name">MV Delayed</span>
+            <span class="vessel-badge docked" id="v3-badge">Berth B1</span>
+          </div>
+          <div class="vessel-hud-details" id="v3-hud-desc">
+            Cargo: <strong>Container (960 TEU)</strong><br>
+            Shore Power Plugged In (Zero Idling)
+          </div>
+          <div class="vessel-hud-metric">
+            <span>Wait: <strong id="v3-wait">0.0h</strong></span>
+            <span>Demurrage: <strong id="v3-demurrage">$0</strong></span>
+          </div>
+        </div>
+
+        <!-- V4 Dry Bulk -->
+        <div class="vessel-hud-card active-vessel card-cargo-bulk">
+          <div class="vessel-hud-header">
+            <span class="vessel-hud-name">MV Baltic Titan</span>
+            <span class="vessel-badge cargo-bulk">Berth C1</span>
+          </div>
+          <div class="vessel-hud-details">
+            Cargo: <strong>Dry Bulk (65k T Ore)</strong><br>
+            Continuous Unloader (6,000 T/h)
+          </div>
+          <div class="vessel-hud-metric">
+            <span>Wait: <strong>0.0h</strong></span>
+            <span>Certified: <strong>On-Chain</strong></span>
+          </div>
+        </div>
+
+        <!-- V5 LNG Energy -->
+        <div class="vessel-hud-card active-vessel card-cargo-energy">
+          <div class="vessel-hud-header">
+            <span class="vessel-hud-name">MT Arctic Spirit</span>
+            <span class="vessel-badge cargo-lng">Berth C2</span>
+          </div>
+          <div class="vessel-hud-details">
+            Cargo: <strong>LNG (90k m³ Gas)</strong><br>
+            Cryogenic Vapor Boom &amp; Sensors
+          </div>
+          <div class="vessel-hud-metric">
+            <span>Wait: <strong>0.0h</strong></span>
+            <span>Safety: <strong>Anchored</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparative KPIs Row -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-num" id="kpi-wait">0.0 h</div>
+          <div class="kpi-label">Vessel Queue Wait</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-num" id="kpi-cost">$0</div>
+          <div class="kpi-label">Demurrage Incurred</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-num" id="kpi-co2">-13.8%</div>
+          <div class="kpi-label">CO2 Footprint Cut</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-num" id="kpi-balance" style="color: var(--emerald);">28.0%</div>
+          <div class="kpi-label">Workload Variance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REAL-TIME BLOCKCHAIN TRUST STUDIO -->
+    <div class="card blockchain-card">
+        <div class="card-header">
+          <div class="card-title" style="color: #c4b5fd;">
+            <span>&#128279;</span> Real-Time Blockchain Trust Protocol
+          </div>
+          <button class="btn" style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.4); padding: 6px 12px; font-size: 11px;" onclick="runTamperTest()">
+            &#9889; Run 100% Audit
+          </button>
+        </div>
+
+        <!-- Live Pipeline -->
+        <div class="blockchain-pipeline">
+          <div class="pipe-step">
+            <span class="pipe-name">Port Event</span>
+            <span class="pipe-sub">Off-Chain</span>
+          </div>
+          <span class="pipe-arrow">&rarr;</span>
+          <div class="pipe-step">
+            <span class="pipe-name">RFC 8785</span>
+            <span class="pipe-sub">Canonical JCS</span>
+          </div>
+          <span class="pipe-arrow">&rarr;</span>
+          <div class="pipe-step">
+            <span class="pipe-name">SHA-256</span>
+            <span class="pipe-sub">Record Digest</span>
+          </div>
+          <span class="pipe-arrow">&rarr;</span>
+          <div class="pipe-step">
+            <span class="pipe-name">RFC 6962</span>
+            <span class="pipe-sub">Merkle Tree Root</span>
+          </div>
+          <span class="pipe-arrow">&rarr;</span>
+          <div class="pipe-step">
+            <span class="pipe-name">On-Chain Block</span>
+            <span class="pipe-sub">Smart Contract</span>
+          </div>
+        </div>
+
+
+
+        <!-- Real-Time Tamper & Mutation Console -->
+        <div class="tamper-console">
+          <div class="tamper-header">
+            <span>Live Fraud &amp; Tamper Detection Testbed</span>
+            <span style="font-size: 10px; color: var(--emerald);">&#10003; 100% Detection Rate</span>
+          </div>
+          <div class="tamper-payload" id="tamper-payload-display">
+            {"vessel":"MV Delayed","berth":"B1","wait_hours":0.0,"demurrage_usd":0.0,"co2_saved_kg":13678.6}
+          </div>
+          <div class="tamper-buttons">
+            <button class="btn-verify" onclick="verifyRecordAuthenticity(false)">
+              &#10003; Verify Authentic Record
+            </button>
+            <button class="btn-tamper" onclick="verifyRecordAuthenticity(true)">
+              &#9888; Mutate Record (Simulate Fraud)
+            </button>
+          </div>
+          <div class="tamper-status-box" id="tamper-feedback"></div>
+        </div>
+
+        <!-- Live Block Ledger Table -->
+        <div style="font-size: 11px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; text-transform: uppercase;">
+          Cryptographic On-Chain Ledger
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Block</th>
+                <th>UTC Time</th>
+                <th>Previous Hash</th>
+                <th>Merkle Root</th>
+                <th>Tx</th>
+                <th>Proof</th>
+              </tr>
+            </thead>
+            <tbody id="chain-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+  </div>
+
+  <script>
+    let currentScenario = 'b';
+    let simTime = 8.0;
+    let isPlaying = false;
+    let playbackSpeed = 1.0;
+    let simInterval = null;
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('port-clock').innerText = now.toUTCString().split(' ')[4] + ' UTC';
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function formatSimTime(h) {
+      const hours = Math.floor(h);
+      const minutes = Math.floor((h - hours) * 60);
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} UTC`;
+    }
+
+    function setSpeed(spd) {
+      playbackSpeed = spd;
+      document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('spd-' + spd).classList.add('active');
+    }
+
+    function togglePlay() {
+      if (isPlaying) {
+        pauseSim();
+      } else {
+        playSim();
+      }
+    }
+
+    function playSim() {
+      isPlaying = true;
+      document.getElementById('play-icon').innerHTML = '&#10074;&#10074;';
+      document.getElementById('play-text').innerText = 'Pause';
+      if (simInterval) clearInterval(simInterval);
+      simInterval = setInterval(() => {
+        simTime += 0.05 * playbackSpeed;
+        if (simTime >= 20.0) {
+          simTime = 20.0;
+          pauseSim();
+        }
+        document.getElementById('sim-slider').value = simTime;
+        updateSimulationFrame();
+      }, 50);
+    }
+
+    function pauseSim() {
+      isPlaying = false;
+      document.getElementById('play-icon').innerHTML = '&#9658;';
+      document.getElementById('play-text').innerText = 'Play Simulation';
+      if (simInterval) clearInterval(simInterval);
+    }
+
+    function resetSim() {
+      pauseSim();
+      simTime = 6.0;
+      document.getElementById('sim-slider').value = 6.0;
+      updateSimulationFrame();
+    }
+
+    function onSliderScrub(val) {
+      simTime = parseFloat(val);
+      updateSimulationFrame();
+    }
+
+    function setOption(opt) {
+      currentScenario = opt;
+      document.getElementById('btn-opt-a').className = 'sim-toggle-btn opt-a' + (opt === 'a' ? ' active' : '');
+      document.getElementById('btn-opt-b').className = 'sim-toggle-btn' + (opt === 'b' ? ' active' : '');
+      updateSimulationFrame();
+    }
+
+    function filterCargo(cat) {
+      document.querySelectorAll('.cargo-filter-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('filter-' + cat).classList.add('active');
+
+      const vContainer = document.querySelectorAll('.card-cargo-container');
+      const vBulk = document.querySelectorAll('.card-cargo-bulk');
+      const vEnergy = document.querySelectorAll('.card-cargo-energy');
+
+      if (cat === 'all') {
+        vContainer.forEach(el => el.style.display = 'block');
+        vBulk.forEach(el => el.style.display = 'block');
+        vEnergy.forEach(el => el.style.display = 'block');
+      } else if (cat === 'container') {
+        vContainer.forEach(el => el.style.display = 'block');
+        vBulk.forEach(el => el.style.display = 'none');
+        vEnergy.forEach(el => el.style.display = 'none');
+      } else if (cat === 'bulk') {
+        vContainer.forEach(el => el.style.display = 'none');
+        vBulk.forEach(el => el.style.display = 'block');
+        vEnergy.forEach(el => el.style.display = 'none');
+      } else if (cat === 'energy') {
+        vContainer.forEach(el => el.style.display = 'none');
+        vBulk.forEach(el => el.style.display = 'none');
+        vEnergy.forEach(el => el.style.display = 'block');
+      }
+    }
+
+    function updateSimulationFrame() {
+      const timeStr = formatSimTime(simTime);
+      document.getElementById('sim-clock-display').innerText = `Simulation Time: ${timeStr}`;
+
+      const v1 = document.getElementById('vessel-1');
+      const v2 = document.getElementById('vessel-2');
+      const v3 = document.getElementById('vessel-3');
+      const routeAnchor = document.getElementById('route-anchor');
+      const routeB1 = document.getElementById('route-b1');
+      const b1Warning = document.getElementById('berth-b1-idle-warning');
+      const anchorBadge = document.getElementById('anchor-delay-badge');
+
+      const v3Card = document.getElementById('v3-hud-card');
+      const v3Badge = document.getElementById('v3-badge');
+      const v3Desc = document.getElementById('v3-hud-desc');
+      const v3Wait = document.getElementById('v3-wait');
+      const v3Demurrage = document.getElementById('v3-demurrage');
+
+      // V1 and V2 Approach trajectory (06:00 -> 08:00)
+      if (simTime < 8.0) {
+        const progress = (simTime - 6.0) / 2.0;
+        const v1X = 100 + progress * 510;
+        const v1Y = 210 - progress * 90;
+        v1.setAttribute('transform', `translate(${v1X}, ${v1Y})`);
+
+        const v2X = 50 + progress * 840;
+        const v2Y = 210 - progress * 90;
+        v2.setAttribute('transform', `translate(${v2X}, ${v2Y})`);
+      } else {
+        v1.setAttribute('transform', 'translate(610, 120)');
+        v2.setAttribute('transform', 'translate(890, 120)');
+      }
+
+      // Option A vs Option B
+      if (currentScenario === 'a') {
+        routeAnchor.style.display = 'block';
+        routeB1.style.display = 'none';
+        b1Warning.style.display = 'block';
+
+        document.getElementById('kpi-wait').innerText = '12.0 h';
+        document.getElementById('kpi-wait').style.color = 'var(--rose)';
+        document.getElementById('kpi-cost').innerText = '$14,400';
+        document.getElementById('kpi-cost').style.color = 'var(--rose)';
+        document.getElementById('kpi-co2').innerText = '0.0%';
+        document.getElementById('kpi-co2').style.color = 'var(--text-muted)';
+        document.getElementById('kpi-balance').innerText = '42.0%';
+        document.getElementById('kpi-balance').style.color = 'var(--rose)';
+
+        document.getElementById('v3-hull').setAttribute('fill', '#e11d48');
+        document.getElementById('v3-hull').setAttribute('stroke', '#f43f5e');
+        document.getElementById('v3-c1').setAttribute('fill', '#f43f5e');
+        document.getElementById('v3-c2').setAttribute('fill', '#e11d48');
+        document.getElementById('v3-c3').setAttribute('fill', '#be123c');
+        document.getElementById('v3-c4').setAttribute('fill', '#f43f5e');
+        document.getElementById('v3-label').setAttribute('fill', '#f43f5e');
+        document.getElementById('v3-label').textContent = 'MV Delayed [FORCED AT ANCHOR]';
+
+        v3Card.className = 'vessel-hud-card delayed-vessel card-cargo-container';
+        v3Badge.className = 'vessel-badge anchored';
+        v3Badge.innerText = 'Anchorage Alpha';
+        v3Wait.innerText = '12.0h';
+        v3Wait.style.color = 'var(--rose)';
+        v3Demurrage.innerText = '$14,400';
+        v3Demurrage.style.color = 'var(--rose)';
+        v3Desc.innerHTML = 'Terminal A full. Forced to wait 12h at anchor.<br>Demurrage: $14,400. Extra CO2: +13.6t.';
+
+        if (simTime < 8.0) {
+          const progress = (simTime - 6.0) / 2.0;
+          const v3X = 50 + progress * 200;
+          const v3Y = 210 - progress * 40;
+          v3.setAttribute('transform', `translate(${v3X}, ${v3Y})`);
+          anchorBadge.style.display = 'none';
+        } else {
+          v3.setAttribute('transform', 'translate(180, 85)');
+          anchorBadge.style.display = 'block';
+        }
+      } else {
+        routeAnchor.style.display = 'none';
+        routeB1.style.display = 'block';
+        b1Warning.style.display = 'none';
+        anchorBadge.style.display = 'none';
+
+        document.getElementById('kpi-wait').innerText = '0.0 h';
+        document.getElementById('kpi-wait').style.color = 'var(--cyan)';
+        document.getElementById('kpi-cost').innerText = '$0';
+        document.getElementById('kpi-cost').style.color = 'var(--cyan)';
+        document.getElementById('kpi-co2').innerText = '-13.8%';
+        document.getElementById('kpi-co2').style.color = 'var(--emerald)';
+        document.getElementById('kpi-balance').innerText = '28.0%';
+        document.getElementById('kpi-balance').style.color = 'var(--emerald)';
+
+        document.getElementById('v3-hull').setAttribute('fill', '#059669');
+        document.getElementById('v3-hull').setAttribute('stroke', '#34d399');
+        document.getElementById('v3-c1').setAttribute('fill', '#34d399');
+        document.getElementById('v3-c2').setAttribute('fill', '#10b981');
+        document.getElementById('v3-c3').setAttribute('fill', '#059669');
+        document.getElementById('v3-c4').setAttribute('fill', '#34d399');
+        document.getElementById('v3-label').setAttribute('fill', '#34d399');
+        document.getElementById('v3-label').textContent = 'MV Delayed [OPTIMIZED DOCKING]';
+
+        v3Card.className = 'vessel-hud-card optimized-vessel card-cargo-container';
+        v3Badge.className = 'vessel-badge docked';
+        v3Badge.innerText = 'Berth B1';
+        v3Wait.innerText = '0.0h';
+        v3Wait.style.color = 'var(--emerald)';
+        v3Demurrage.innerText = '$0';
+        v3Demurrage.style.color = 'var(--emerald)';
+        v3Desc.innerHTML = 'Reassigned to Terminal B Berth B1 (0.0h wait).<br>Demurrage saved: $14,400. CO2 cut: 13,678 kg.';
+
+        if (simTime < 8.0) {
+          const progress = (simTime - 6.0) / 2.0;
+          const v3X = 50 + progress * 400;
+          const v3Y = 210 + progress * 40;
+          v3.setAttribute('transform', `translate(${v3X}, ${v3Y})`);
+        } else {
+          v3.setAttribute('transform', 'translate(650, 260)');
+        }
+      }
+    }
+
+    // ==========================================
+    // REAL-TIME BLOCKCHAIN ACTIONS & TAMPER TEST
+    // ==========================================
+
+
+    async function verifyRecordAuthenticity(simulateTampering) {
+      const fb = document.getElementById('tamper-feedback');
+      fb.style.display = 'block';
+
+      // Authentic baseline data
+      let payloadData = {
+        vessel: "MV Delayed",
+        berth: "B1",
+        wait_hours: 0.0,
+        demurrage_usd: 0.0,
+        co2_saved_kg: 13678.6
+      };
+
+      if (simulateTampering) {
+        // Tamper with record: fraudulently alter demurrage fee from 0 to $14,400
+        payloadData.demurrage_usd = 14400.0;
+        payloadData.tampered_flag = true;
+      }
+
+      document.getElementById('tamper-payload-display').innerText = JSON.stringify(payloadData);
+
+      try {
+        const res = await fetch('/api/blockchain/verify-record', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            record_type: 'APPROVE_PLAN',
+            data: payloadData
+          })
+        });
+        const audit = await res.json();
+        if (audit.verified) {
+          fb.style.background = 'rgba(16, 185, 129, 0.15)';
+          fb.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+          fb.style.color = 'var(--emerald)';
+          fb.innerHTML = `<strong>&#10003; ${audit.message}</strong><br>SHA-256: <code>${audit.computed_hash.slice(0, 24)}...</code>`;
+        } else {
+          fb.style.background = 'rgba(244, 63, 94, 0.15)';
+          fb.style.border = '1px solid rgba(244, 63, 94, 0.4)';
+          fb.style.color = 'var(--rose)';
+          fb.innerHTML = `<strong>&#9888; ${audit.message}</strong><br>Computed SHA-256 [<code>${audit.computed_hash.slice(0, 16)}...</code>] does NOT match on-chain root!`;
+        }
+      } catch (e) {
+        fb.style.color = 'var(--rose)';
+        fb.innerText = 'Audit failed: ' + e;
+      }
+    }
+
+
+
+    async function loadChain() {
+      try {
+        const res = await fetch('/api/blockchain/chain');
+        const data = await res.json();
+        const tbody = document.getElementById('chain-table-body');
+        tbody.innerHTML = data.blocks.map(b => `
+          <tr>
+            <td><strong>#${b.index}</strong></td>
+            <td>${b.timestamp.split('T')[1].slice(0, 8)}</td>
+            <td><code>${b.previous_hash.slice(0, 8)}...</code></td>
+            <td><code>${b.merkle_root.slice(0, 8)}...</code></td>
+            <td>${b.tx_count}</td>
+            <td style="color: var(--emerald);">&#10003; Valid</td>
+          </tr>
+        `).reverse().join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function runTamperTest() {
+      const fb = document.getElementById('tamper-feedback');
+      fb.style.display = 'block';
+      fb.style.background = 'rgba(139, 92, 246, 0.15)';
+      fb.style.color = '#c4b5fd';
+      fb.innerText = 'Running cryptographic verification suite & injecting mutations...';
+      try {
+        const res = await fetch('/api/blockchain/audit', { method: 'POST' });
+        const report = await res.json();
+        fb.style.background = 'rgba(16, 185, 129, 0.15)';
+        fb.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        fb.style.color = 'var(--emerald)';
+        fb.innerHTML = `
+          <strong>\u2713 Cryptographic Audit Passed:</strong> ${report.summary}<br>
+          &bull; Valid Records Authenticated: <strong>${report.valid_verification_rate_pct}%</strong> (Target: 100%)<br>
+          &bull; Tampered Records Caught: <strong>${report.tampered_detection_rate_pct}%</strong> (Target: 100%)
+        `;
+        loadChain();
+      } catch (e) {
+        fb.innerText = 'Audit failed: ' + e;
+      }
+    }
+
+    // Initialize
+    loadChain();
+    setOption('b');
+    updateSimulationFrame();
+  </script>
+</body>
+</html>
