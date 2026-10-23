@@ -93,6 +93,71 @@ def emergency_sos_status() -> dict:
     }
 
 
+@app.get("/responders")
+@app.get("/api/responders")
+def get_port_responders() -> dict:
+    """Active port emergency response units and maritime incident personnel."""
+    return {
+        "status": "OPERATIONAL",
+        "total_active": 6,
+        "responders": [
+            {
+                "id": "RESP-01",
+                "name": "Harbor Patrol Alpha",
+                "unit_type": "SECURITY_PATROL",
+                "callsign": "PORT-PATROL-1",
+                "status": "ON_DUTY",
+                "location": "North Quay Basin",
+                "channel": "VHF 16 / 12",
+            },
+            {
+                "id": "RESP-02",
+                "name": "Fire Tug Ocean Guard",
+                "unit_type": "FIRE_RESCUE",
+                "callsign": "TUG-FIREGUARD",
+                "status": "STANDBY",
+                "location": "Berth B2 Standby Slip",
+                "capacity": "12,000 GPM Foam/Water Monitor",
+            },
+            {
+                "id": "RESP-03",
+                "name": "Coast Guard Cutter Sentinel",
+                "unit_type": "COAST_GUARD",
+                "callsign": "USCG-SENTINEL",
+                "status": "ON_PATROL",
+                "location": "Outer Fairway Approach (Buoy #1)",
+                "channel": "VHF 16",
+            },
+            {
+                "id": "RESP-04",
+                "name": "Pollution Response Skimmer CleanPort-3",
+                "unit_type": "ENVIRONMENTAL_RESPONSE",
+                "callsign": "SKIM-03",
+                "status": "STANDBY",
+                "location": "Terminal C Basin",
+                "containment_boom_m": 800,
+            },
+            {
+                "id": "RESP-05",
+                "name": "Port Pilot Station Launch 2",
+                "unit_type": "PILOTAGE",
+                "callsign": "PILOT-2",
+                "status": "ON_DUTY",
+                "location": "Pilot Boarding Ground",
+                "channel": "VHF 14",
+            },
+            {
+                "id": "RESP-06",
+                "name": "Maritime Paramedic Fast Rescue Craft",
+                "unit_type": "MEDEVAC",
+                "callsign": "MED-FAST-1",
+                "status": "ON_DUTY",
+                "location": "South Embankment",
+            },
+        ],
+    }
+
+
 @app.get("/config/targets")
 def targets() -> dict:
     """Proposed §3 targets (goals, not achieved results)."""

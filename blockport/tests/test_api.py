@@ -201,5 +201,24 @@ def test_api_dynamic_operations_flow():
     assert state_preset["kpis"]["total_wait_saved_hours"] == 12.0
 
 
+def test_api_responders_and_sos():
+    client = TestClient(app)
+
+    # 1. Test /api/sos
+    res_sos = client.get("/api/sos")
+    assert res_sos.status_code == 200
+    assert res_sos.json()["status"] == "CLEAR"
+    assert "emergency_channel" in res_sos.json()
+
+    # 2. Test /api/responders & /responders
+    for path in ["/api/responders", "/responders"]:
+        res_resp = client.get(path)
+        assert res_resp.status_code == 200
+        data = res_resp.json()
+        assert data["status"] == "OPERATIONAL"
+        assert data["total_active"] >= 1
+        assert len(data["responders"]) >= 1
+
+
 
 
