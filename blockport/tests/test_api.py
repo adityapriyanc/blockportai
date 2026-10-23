@@ -210,7 +210,7 @@ def test_api_responders_and_sos():
     assert res_sos.json()["status"] == "CLEAR"
     assert "emergency_channel" in res_sos.json()
 
-    # 2. Test /api/responders & /responders
+    # 2. Test /api/responders & /responders (GET)
     for path in ["/api/responders", "/responders"]:
         res_resp = client.get(path)
         assert res_resp.status_code == 200
@@ -218,6 +218,30 @@ def test_api_responders_and_sos():
         assert data["status"] == "OPERATIONAL"
         assert data["total_active"] >= 1
         assert len(data["responders"]) >= 1
+
+    # 3. Test POST /sos & /api/sos broadcast
+    for sos_path in ["/api/sos", "/sos"]:
+        res_post_sos = client.post(
+            sos_path,
+            json={
+                "vessel": "MV Delayed",
+                "incident_type": "ENGINE_COOLING_ALERT",
+                "severity": "HIGH",
+            },
+        )
+        assert res_post_sos.status_code == 200
+        data_sos = res_post_sos.json()
+        assert data_sos["status"] == "ACKNOWLEDGED"
+        assert len(data_sos["dispatched_responders"]) >= 1
+
+    # 4. Test POST /responders & /api/responders dispatch
+    for resp_path in ["/api/responders", "/responders"]:
+        res_post_resp = client.post(
+            resp_path,
+            json={"responder_id": "RESP-02", "action": "DISPATCH"},
+        )
+        assert res_post_resp.status_code == 200
+        assert res_post_resp.json()["status"] == "DISPATCHED"
 
 
 

@@ -74,6 +74,7 @@ def health() -> dict:
     return {"status": "ok", "version": __version__}
 
 
+@app.get("/sos")
 @app.get("/api/sos")
 def emergency_sos_status() -> dict:
     """Maritime distress, emergency channel, and port safety readiness endpoint."""
@@ -90,6 +91,48 @@ def emergency_sos_status() -> dict:
             for d in dynamic_engine.active_disruptions
         ],
         "storm_warning": (dynamic_engine.weather_condition == "GALE_WARNING"),
+    }
+
+
+@app.post("/sos")
+@app.post("/api/sos")
+def broadcast_emergency_sos(payload: Optional[Dict[str, Any]] = Body(None)) -> dict:
+    """Broadcast emergency distress signal (SOS) and mobilize port responders."""
+    data = payload or {}
+    incident_type = data.get("incident_type", data.get("type", "MARITIME_DISTRESS"))
+    vessel = data.get("vessel", data.get("vessel_name", "UNKNOWN_VESSEL"))
+    severity = data.get("severity", "CRITICAL")
+    location = data.get("location", "Outer Channel / Harbor Basin")
+    desc = data.get("description", f"SOS Emergency Distress Alert for {vessel}")
+
+    disruption = dynamic_engine.apply_disruption(
+        kind="EMERGENCY_SOS",
+        description=f"{incident_type} alert on {vessel}: {desc}",
+        severity=severity,
+    )
+
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    now_tag = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+    sos_id = f"SOS-{now_tag}"
+
+    dispatched = [
+        {"unit": "Harbor Patrol Alpha", "callsign": "PORT-PATROL-1", "eta_min": 3.5},
+        {"unit": "Fire Tug Ocean Guard", "callsign": "TUG-FIREGUARD", "eta_min": 6.0},
+        {"unit": "Coast Guard Cutter Sentinel", "callsign": "USCG-SENTINEL", "eta_min": 4.0},
+    ]
+
+    return {
+        "status": "ACKNOWLEDGED",
+        "sos_id": sos_id,
+        "incident_type": incident_type,
+        "vessel": vessel,
+        "severity": severity,
+        "location": location,
+        "emergency_channel": "VHF Ch 16 (156.800 MHz)",
+        "dispatched_responders": dispatched,
+        "active_disruption_id": disruption.disruption_id,
+        "timestamp_utc": now_iso,
+        "action_taken": "Responders dispatched, channel safety perimeter active",
     }
 
 
@@ -155,6 +198,27 @@ def get_port_responders() -> dict:
                 "location": "South Embankment",
             },
         ],
+    }
+
+
+@app.post("/responders")
+@app.post("/api/responders")
+def dispatch_or_register_responder(payload: Optional[Dict[str, Any]] = Body(None)) -> dict:
+    """Dispatch, update, or register an emergency responder unit."""
+    data = payload or {}
+    responder_id = data.get("responder_id", data.get("id", "RESP-01"))
+    action = data.get("action", "DISPATCH")
+    target = data.get("target", data.get("incident", "Harbor Fairway Alert"))
+
+    return {
+        "status": "DISPATCHED",
+        "responder_id": responder_id,
+        "action": action,
+        "target": target,
+        "channel": "VHF 16 / 12",
+        "eta_minutes": 4.2,
+        "timestamp_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "message": f"Unit {responder_id} acknowledged {action} for {target}",
     }
 
 
