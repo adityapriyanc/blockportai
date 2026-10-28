@@ -229,9 +229,31 @@ def targets() -> dict:
 
 
 @app.get("/api/dynamic/state")
-def get_dynamic_state(shore_power: bool = True) -> dict:
+def get_dynamic_state(shore_power: bool = True, sim_hour: Optional[float] = None) -> dict:
     """Fetch current live dynamic port operations state across all berths and vessels."""
-    return dynamic_engine.compute_state(shore_power=shore_power)
+    return dynamic_engine.compute_state(shore_power=shore_power, sim_hour=sim_hour)
+
+
+@app.post("/api/dynamic/clock")
+def update_dynamic_clock(payload: Dict[str, Any] = Body(...)) -> dict:
+    """Advance or manually seek the continuous simulation clock."""
+    if "hour" in payload and payload["hour"] is not None:
+        dynamic_engine.set_sim_time(float(payload["hour"]))
+    elif "delta" in payload and payload["delta"] is not None:
+        dynamic_engine.advance_sim_time(float(payload["delta"]))
+
+    if "running" in payload or "speed" in payload:
+        running = payload.get("running", dynamic_engine.sim_running)
+        speed = payload.get("speed", dynamic_engine.sim_speed)
+        dynamic_engine.set_sim_playback(running=running, speed=speed)
+
+    return dynamic_engine.compute_state()
+
+
+@app.get("/api/dynamic/clock")
+def get_dynamic_clock() -> dict:
+    """Retrieve current simulation clock status."""
+    return dynamic_engine.get_clock_state()
 
 
 @app.post("/api/dynamic/preset")
@@ -242,9 +264,43 @@ def set_dynamic_preset(payload: Dict[str, Any] = Body(...)) -> dict:
     return dynamic_engine.compute_state()
 
 
+@app.post("/api/predict/physics")
+def predict_vessel_physics(payload: Dict[str, Any] = Body(...)) -> dict:
+    """Predict accurate modified ETA, Dock Duration, and ETD based on MetOcean weather and GPS."""
+    res = dynamic_engine.predict_vessel_physical_times(
+        vessel_type_str=payload.get("vessel_type", "container"),
+        loa_m=float(payload.get("loa_m", 300.0)),
+        draft_m=float(payload.get("draft_m", 12.0)),
+        cargo_units=float(payload.get("cargo_units", 1200.0)),
+        nominal_eta_hour=float(payload.get("nominal_eta_hour", 8.0)),
+        gps_distance_nmi=float(payload["gps_distance_nmi"]) if "gps_distance_nmi" in payload and payload["gps_distance_nmi"] is not None else None,
+        gps_lat=float(payload["gps_lat"]) if "gps_lat" in payload and payload["gps_lat"] is not None else None,
+        gps_lon=float(payload["gps_lon"]) if "gps_lon" in payload and payload["gps_lon"] is not None else None,
+        sog_knots=float(payload.get("sog_knots", 18.0)),
+        heading_deg=float(payload.get("heading_deg", 115.0)),
+        cranes_assigned=int(payload.get("cranes", 4)),
+        fixed_dock_hours=float(payload["fixed_dock_hours"]) if "fixed_dock_hours" in payload and payload["fixed_dock_hours"] is not None else None,
+    )
+    return res
+
+
+@app.post("/api/dynamic/weather")
+def update_dynamic_weather(payload: Dict[str, Any] = Body(...)) -> dict:
+    """Update harbor and approach physical conditions (wind, waves, visibility)."""
+    dynamic_engine.update_weather_conditions(
+        wind_speed_knots=payload.get("wind_speed_knots"),
+        wind_direction_deg=payload.get("wind_direction_deg"),
+        wave_height_m=payload.get("wave_height_m"),
+        visibility_nmi=payload.get("visibility_nmi"),
+        condition=payload.get("condition"),
+        channel_congestion=payload.get("channel_congestion"),
+    )
+    return dynamic_engine.compute_state()
+
+
 @app.post("/api/dynamic/add-vessel")
 def dynamic_add_vessel(payload: Dict[str, Any] = Body(...)) -> dict:
-    """Dispatch and schedule an ad-hoc custom vessel call dynamically."""
+    """Dispatch and schedule an ad-hoc custom vessel call dynamically with optional fixed dock time and physical prediction."""
     name = payload.get("name", "MV Ad-Hoc Express")
     vessel_type = payload.get("vessel_type", "container")
     loa_m = float(payload.get("loa_m", 300.0))
@@ -252,6 +308,14 @@ def dynamic_add_vessel(payload: Dict[str, Any] = Body(...)) -> dict:
     cargo_units = float(payload.get("cargo_units", 1000.0))
     arrival_hour = float(payload.get("arrival_hour", 8.0))
     allowed_berths = payload.get("allowed_berths")
+    dock_hours = payload.get("dock_hours") or payload.get("fixed_dock_hours")
+    fixed_dock = float(dock_hours) if (dock_hours is not None and float(dock_hours) > 0) else None
+
+    apply_physics = bool(payload.get("apply_physics", False))
+    gps_dist = float(payload["gps_distance_nmi"]) if "gps_distance_nmi" in payload and payload["gps_distance_nmi"] is not None else None
+    gps_lat = float(payload["gps_lat"]) if "gps_lat" in payload and payload["gps_lat"] is not None else None
+    gps_lon = float(payload["gps_lon"]) if "gps_lon" in payload and payload["gps_lon"] is not None else None
+    sog_knots = float(payload.get("sog_knots", 18.0))
 
     dynamic_engine.add_custom_vessel(
         name=name,
@@ -261,8 +325,128 @@ def dynamic_add_vessel(payload: Dict[str, Any] = Body(...)) -> dict:
         cargo_units=cargo_units,
         arrival_hour=arrival_hour,
         allowed_berths=allowed_berths,
+        fixed_dock_hours=fixed_dock,
+        apply_physics=apply_physics,
+        gps_distance_nmi=gps_dist,
+        gps_lat=gps_lat,
+        gps_lon=gps_lon,
+        sog_knots=sog_knots,
     )
     return dynamic_engine.compute_state()
+
+
+@app.post("/api/dynamic/clear-fleet")
+def dynamic_clear_fleet() -> dict:
+    """Wipe all vessels — port starts fresh for live operator dispatch."""
+    dynamic_engine.clear_fleet()
+    return {"status": "cleared", "vessel_count": 0, "berth_count": len(dynamic_engine.berths)}
+
+
+@app.post("/api/dynamic/add-berth")
+def dynamic_add_berth(payload: Dict[str, Any] = Body(...)) -> dict:
+    """Dynamically add a new berth to the port layout."""
+    name = payload.get("name", "")
+    terminal = payload.get("terminal", "Custom Terminal")
+    length_m = float(payload.get("length_m", 300.0))
+    depth_m = float(payload.get("depth_m", 12.0))
+    compatible_types = payload.get("compatible_types", ["container"])
+    cranes = int(payload.get("cranes", 2))
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Berth name is required.")
+
+    try:
+        berth = dynamic_engine.add_berth(
+            name=name,
+            terminal=terminal,
+            length_m=length_m,
+            depth_m=depth_m,
+            compatible_types=compatible_types,
+            cranes=cranes,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+    return {
+        "status": "added",
+        "berth": {
+            "name": berth.name,
+            "terminal": berth.terminal,
+            "length_m": berth.length_m,
+            "depth_m": berth.depth_m,
+            "cranes": berth.cranes,
+            "compatible_types": [t.value for t in berth.compatible_types],
+        },
+        "total_berths": len(dynamic_engine.berths),
+    }
+
+
+@app.delete("/api/dynamic/berth/{berth_name}")
+def dynamic_remove_berth(berth_name: str) -> dict:
+    """Remove a berth from the port layout."""
+    removed = dynamic_engine.remove_berth(berth_name)
+    if not removed:
+        raise HTTPException(status_code=404, detail=f"Berth '{berth_name}' not found.")
+    return {"status": "removed", "berth_name": berth_name, "total_berths": len(dynamic_engine.berths)}
+
+
+@app.get("/api/dynamic/port-layout")
+def get_port_layout() -> dict:
+    """Get current port layout: all terminals and berths with their specs."""
+    terminals: dict = {}
+    for b in dynamic_engine.berths:
+        if b.terminal not in terminals:
+            terminals[b.terminal] = []
+        terminals[b.terminal].append({
+            "name": b.name,
+            "length_m": b.length_m,
+            "depth_m": b.depth_m,
+            "cranes": b.cranes,
+            "compatible_types": [t.value for t in b.compatible_types],
+            "under_maintenance": any(o.berth == b.name for o in dynamic_engine.active_outages),
+        })
+    return {
+        "terminals": [
+            {"name": t, "berths": berths} for t, berths in terminals.items()
+        ],
+        "total_berths": len(dynamic_engine.berths),
+        "total_vessels": len(dynamic_engine.vessels),
+    }
+
+
+@app.get("/api/dynamic/fleet")
+def get_live_fleet() -> dict:
+    """Get current live vessel fleet and their optimizer-assigned berths."""
+    if not dynamic_engine.vessels:
+        return {"vessels": [], "anchor_queue": [], "total": 0}
+
+    try:
+        state = dynamic_engine.compute_state()
+        return {
+            "vessels": state["vessels"],
+            "anchor_queue": [v for v in state["vessels"] if v["wait_hours_val"] > 0],
+            "total": len(state["vessels"]),
+        }
+    except Exception as e:
+        base_date = dynamic_engine.base_date
+        raw = []
+        for v in dynamic_engine.vessels:
+            arr_h = (v.arrival - base_date).total_seconds() / 3600.0
+            raw.append({
+                "id": v.id,
+                "name": v.name,
+                "type": v.vessel_type.value.upper(),
+                "loa_m": v.loa_m,
+                "draft_m": v.draft_m,
+                "cargo_units": v.cargo_units,
+                "arrival_hour": f"{arr_h:04.1f} UTC",
+                "arrival_val": round(arr_h, 2),
+                "assigned_berth": "Pending",
+                "wait_hours": "—",
+                "wait_hours_val": 0,
+                "status": "PENDING",
+            })
+        return {"vessels": raw, "anchor_queue": [], "total": len(raw), "error": str(e)}
 
 
 @app.post("/api/dynamic/disruption")

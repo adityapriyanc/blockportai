@@ -1,2681 +1,1787 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlockPort AI - Digital Twin Autonomous Port Simulation</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-base: #06090e;
-      --bg-surface: #0c121d;
-      --bg-card: rgba(13, 20, 32, 0.85);
-      --bg-card-hover: rgba(20, 30, 48, 0.95);
-      --border: rgba(255, 255, 255, 0.08);
-      --border-bright: rgba(255, 255, 255, 0.15);
-      --border-accent: rgba(6, 182, 212, 0.4);
-      --cyan: #06b6d4;
-      --cyan-glow: rgba(6, 182, 212, 0.2);
-      --emerald: #10b981;
-      --emerald-glow: rgba(16, 185, 129, 0.2);
-      --amber: #f59e0b;
-      --rose: #f43f5e;
-      --blue: #3b82f6;
-      --purple: #8b5cf6;
-      --text-main: #f8fafc;
-      --text-dim: #94a3b8;
-      --text-muted: #64748b;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BlockPort — Autonomous Port Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+  :root {
+    --bg: #0b0d11;
+    --surface: #12151b;
+    --surface-elevated: #181c24;
+    --border: #202632;
+    --border-light: #2b3342;
+    --accent: #3b82f6;
+    --accent-dim: rgba(59,130,246,.12);
+    --green: #10b981;
+    --green-dim: rgba(16,185,129,.12);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,.12);
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,.12);
+    --text: #e5e7eb;
+    --muted: #717d91;
+    --font: 'Inter', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 8px;
+  }
 
-    body {
-      background-color: var(--bg-base);
-      color: var(--text-main);
-      font-family: var(--font-sans);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-      line-height: 1.45;
-      background-image: 
-        radial-gradient(circle at 15% 10%, rgba(6, 182, 212, 0.06), transparent 30%),
-        radial-gradient(circle at 85% 25%, rgba(16, 185, 129, 0.05), transparent 30%),
-        radial-gradient(circle at 50% 85%, rgba(59, 130, 246, 0.04), transparent 40%);
-    }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
 
-    /* TOP NAVIGATION HEADER */
-    header.port-header {
-      background: rgba(10, 16, 26, 0.92);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-    }
+  /* ── TOP HEADER ────────────────────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 48px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 16px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: -.3px;
+    color: #fff;
+  }
+  .logo-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    letter-spacing: .02em;
+    font-family: var(--mono);
+  }
 
-    .brand-cluster {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
+  /* ── STATS SCORECARD IN HEADER ───────────────────────────────── */
+  .stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 14px;
+  }
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .stat-label {
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 9px;
+    letter-spacing: .04em;
+  }
+  .stat-value {
+    font-family: var(--mono);
+    font-weight: 600;
+  }
+  .stat-green { color: var(--green); }
+  .stat-blue { color: var(--accent); }
+  .stat-amber { color: var(--amber); }
 
-    .logo-radar {
-      width: 38px;
-      height: 38px;
-      border-radius: 9px;
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(16, 185, 129, 0.2));
-      border: 1px solid var(--cyan);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 0 16px var(--cyan-glow);
-    }
-    .radar-sweep {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: conic-gradient(from 0deg, transparent 70%, rgba(6, 182, 212, 0.6) 100%);
-      animation: rotateSweep 2.4s linear infinite;
-    }
-    @keyframes rotateSweep {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .radar-center-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #fff;
-      z-index: 2;
-      box-shadow: 0 0 8px #fff;
-    }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-    .brand-title-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .brand-name {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(90deg, #fff 40%, var(--cyan) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .badge-dt {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 3px 8px;
-      border-radius: 20px;
-      background: rgba(6, 182, 212, 0.12);
-      border: 1px solid rgba(6, 182, 212, 0.3);
-      color: var(--cyan);
-    }
-    .brand-sub {
-      font-size: 11px;
-      color: var(--text-dim);
-      font-weight: 400;
-    }
+  /* ── MASTER SIMULATION CLOCK STRIP ───────────────────────────── */
+  .clock-strip {
+    background: #0f1218;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+  .clock-display-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .clock-time {
+    font-family: var(--mono);
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 4px 10px;
+    letter-spacing: .02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .clock-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+  }
+  .clock-dot.paused {
+    background: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+  }
+  .clock-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-clock {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .btn-clock:hover {
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-clock.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
 
-    /* HEADER METRICS & CONTROLS */
-    .header-center-info {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      padding: 5px 14px;
-    }
-    .metocean-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      font-family: var(--font-mono);
-      color: var(--text-dim);
-    }
-    .metocean-item strong {
-      color: var(--text-main);
-    }
-    .metocean-sep {
-      color: var(--border-bright);
-    }
+  .clock-seek-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    max-width: 480px;
+  }
+  .clock-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+  }
+  .clock-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(59,130,246,.6);
+  }
+  .clock-slider-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 54px;
+    text-align: right;
+  }
 
-    .live-pulse-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--emerald);
-      letter-spacing: 0.03em;
-    }
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--emerald);
-      box-shadow: 0 0 10px var(--emerald);
-      animation: pulseDot 1.6s ease-in-out infinite;
-    }
-    @keyframes pulseDot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
-    }
+  /* ── THREE COLUMN WORKSPACE ──────────────────────────────────── */
+  .workspace {
+    display: grid;
+    grid-template-columns: 290px 1fr 310px;
+    flex: 1;
+    overflow: hidden;
+    height: calc(100vh - 48px - 45px);
+  }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .btn-action {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      padding: 7px 13px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .btn-action:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: var(--border-bright);
-      transform: translateY(-1px);
-    }
-    .btn-action-primary {
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(59, 130, 246, 0.25));
-      border: 1px solid var(--cyan);
-      color: #fff;
-      box-shadow: 0 0 14px var(--cyan-glow);
-    }
-    .btn-action-primary:hover {
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.4), rgba(59, 130, 246, 0.4));
-      border-color: #38bdf8;
-    }
+  .panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .panel:last-child { border-right: none; }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .panel-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 12px;
+  }
+  .panel-body::-webkit-scrollbar { width: 4px; }
+  .panel-body::-webkit-scrollbar-track { background: transparent; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    /* MAIN CONTAINER */
-    main.port-dashboard {
-      flex: 1;
-      padding: 20px 24px 32px;
-      max-width: 1600px;
-      margin: 0 auto;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+  /* ── PORT STATIONS (BERTHS) ─────────────────────────────────── */
+  .terminal-group { margin-bottom: 16px; }
+  .terminal-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+  .berth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    position: relative;
+    transition: all .15s;
+  }
+  .berth-card.status-occupied {
+    border-left: 3px solid var(--accent);
+  }
+  .berth-card.status-available {
+    border-left: 3px solid var(--green);
+  }
+  .berth-card.status-maint {
+    border-left: 3px solid var(--amber);
+  }
+  .berth-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .berth-title {
+    font-weight: 600;
+    font-size: 13px;
+    font-family: var(--mono);
+    color: #fff;
+  }
+  .berth-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+  .badge-occupied { background: var(--accent-dim); color: var(--accent); }
+  .badge-available { background: var(--green-dim); color: var(--green); }
+  .badge-maintenance { background: var(--amber-dim); color: var(--amber); }
 
-    /* KPI METRICS STRIP */
-    .kpi-strip {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 12px;
-    }
-    .kpi-pill-card {
-      background: var(--bg-card);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.25s ease;
-    }
-    .kpi-pill-card:hover {
-      border-color: var(--border-hover);
-      transform: translateY(-2px);
-    }
-    .kpi-pill-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 3px;
-      height: 100%;
-      background: var(--accent-bar, var(--cyan));
-    }
-    .kpi-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-dim);
-      font-weight: 600;
-      margin-bottom: 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .kpi-val {
-      font-size: 19px;
-      font-weight: 800;
-      font-family: var(--font-mono);
-      letter-spacing: -0.02em;
-      color: var(--text-main);
-    }
-    .kpi-sub {
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+  .berth-meta {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .berth-active-ship {
+    background: var(--surface-elevated);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 11px;
+    margin-top: 4px;
+  }
+  .berth-ship-name {
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .berth-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+  .berth-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width .3s ease;
+  }
+  .del-berth-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--border-light);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    display: none;
+  }
+  .berth-card:hover .del-berth-btn { display: block; }
+  .del-berth-btn:hover { color: var(--red); }
 
-    /* DIGITAL TWIN HARBOR STAGE (HERO) */
-    .twin-stage-container {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
+  /* ── LIVE IMPACT & EFFICIENCY BOARD ──────────────────────────── */
+  .live-impact-card {
+    background: linear-gradient(135deg, #131722 0%, #0e1118 100%);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 18px rgba(0,0,0,.35);
+  }
+  .impact-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    padding-bottom: 8px;
+  }
+  .impact-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .06em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pulse-indicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.8s infinite;
+  }
+  .impact-time-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .impact-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  @media (max-width: 1200px) {
+    .impact-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .impact-stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 10px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .impact-stat-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+  .box-green::before { background: var(--green); }
+  .box-blue::before { background: var(--accent); }
+  .box-amber::before { background: var(--amber); }
+  .box-purple::before { background: var(--purple); }
 
-    .stage-top-bar {
-      padding: 12px 18px;
-      background: rgba(16, 24, 38, 0.8);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-    }
+  .is-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .is-value {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 700;
+    margin: 3px 0 2px;
+    letter-spacing: -.2px;
+  }
+  .box-green .is-value { color: var(--green); }
+  .box-blue .is-value { color: #60a5fa; }
+  .box-amber .is-value { color: var(--amber); }
+  .box-purple .is-value { color: #c084fc; }
 
-    .stage-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .stage-title {
-      font-size: 14px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .stage-preset-tag {
-      font-size: 11px;
-      font-family: var(--font-mono);
-      color: var(--cyan);
-      background: rgba(6, 182, 212, 0.1);
-      border: 1px solid rgba(6, 182, 212, 0.25);
-      padding: 3px 8px;
-      border-radius: 6px;
-    }
+  .is-sub {
+    font-size: 9px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .impact-footer-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,.25);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .if-metric strong {
+    font-family: var(--mono);
+    color: var(--text);
+  }
 
-    /* SCENARIO TOGGLE BUTTONS (OPTION A vs OPTION B) */
-    .scenario-toggle-cluster {
-      display: flex;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 3px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-    }
-    .btn-scenario-opt {
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 7px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-    }
-    .btn-scenario-opt:hover {
-      color: var(--text-main);
-    }
-    .btn-scenario-opt.active-a {
-      background: rgba(244, 63, 94, 0.2);
-      color: #fda4af;
-      border: 1px solid rgba(244, 63, 94, 0.5);
-      font-weight: 700;
-    }
-    .btn-scenario-opt.active-b {
-      background: rgba(16, 185, 129, 0.2);
-      color: #6ee7b7;
-      border: 1px solid rgba(16, 185, 129, 0.5);
-      font-weight: 700;
-    }
+  /* ── CENTER FLEET SECTION CARDS ──────────────────────────────── */
+  .section-group {
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .section-title .pill {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: var(--surface-elevated);
+    font-family: var(--mono);
+    color: var(--text);
+  }
 
-    /* HARBOR SVG CANVAS */
-    .svg-canvas-wrapper {
-      position: relative;
-      width: 100%;
-      height: 480px;
-      background: #080f1a;
-      overflow: hidden;
-      cursor: crosshair;
-    }
-    #harbor-svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+  .vessel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    position: relative;
+    transition: border-color .15s;
+  }
+  .vessel-card:hover { border-color: var(--border-light); }
+  .vessel-card.card-berthed { border-left: 3px solid var(--green); }
+  .vessel-card.card-anchored { border-left: 3px solid var(--amber); }
+  .vessel-card.card-inbound { border-left: 3px solid var(--accent); }
+  .vessel-card.card-departed { border-left: 3px solid var(--muted); opacity: .75; }
 
-    /* FLOATING VESSEL HUD / TOOLTIP */
-    .vessel-hud-card {
-      position: absolute;
-      pointer-events: none;
-      background: rgba(11, 18, 30, 0.94);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--cyan);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 11px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px var(--cyan-glow);
-      display: none;
-      z-index: 50;
-      min-width: 200px;
-      transform: translate(15px, -50%);
-      transition: opacity 0.15s ease;
-    }
-    .hud-title {
-      font-weight: 800;
-      font-size: 13px;
-      color: #fff;
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 4px;
-    }
-    .hud-row {
-      display: flex;
-      justify-content: space-between;
-      color: var(--text-dim);
-      margin: 3px 0;
-    }
-    .hud-row strong {
-      color: var(--text-main);
-      font-family: var(--font-mono);
-    }
+  .vessel-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .vessel-main-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .vessel-card-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: #fff;
+  }
+  .vessel-type-pill {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: .02em;
+  }
+  .vt-container { background: var(--accent-dim); color: var(--accent); }
+  .vt-bulk { background: var(--amber-dim); color: var(--amber); }
+  .vt-tanker { background: var(--red-dim); color: var(--red); }
+  .vt-lng { background: var(--purple-dim); color: var(--purple); }
 
-    /* PLAYBACK TIMELINE CONTROL TOOLBAR */
-    .playback-toolbar {
-      padding: 12px 18px;
-      background: rgba(14, 21, 33, 0.9);
-      border-top: 1px solid var(--border);
-      display: grid;
-      grid-template-columns: auto auto 1fr auto auto;
-      align-items: center;
-      gap: 16px;
-    }
+  .vessel-status-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: .02em;
+    font-family: var(--mono);
+  }
+  .tag-berthed { background: var(--green-dim); color: var(--green); }
+  .tag-anchored { background: var(--amber-dim); color: var(--amber); }
+  .tag-inbound { background: var(--accent-dim); color: var(--accent); }
+  .tag-departed { background: rgba(113,125,145,.15); color: var(--muted); }
 
-    .btn-realtime-mode {
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: #a7f3d0;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      padding: 6px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
-    .btn-realtime-mode.active {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(6, 182, 212, 0.3));
-      border-color: var(--emerald);
-      color: #fff;
-      box-shadow: 0 0 12px var(--emerald-glow);
-    }
+  .vessel-details-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface-elevated);
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-top: 6px;
+  }
+  .vd-item { display: flex; flex-direction: column; }
+  .vd-label { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .vd-val { font-weight: 600; color: var(--text); font-family: var(--mono); margin-top: 1px; }
 
-    .btn-play-ctrl {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-    .btn-play-ctrl:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: var(--cyan);
-    }
+  .vessel-docking-status {
+    margin-top: 8px;
+  }
+  .docking-bar-container {
+    width: 100%;
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .docking-bar-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 3px;
+    transition: width .3s ease;
+  }
 
-    .timeline-scrubber-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .timeline-slider {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 6px;
-      border-radius: 3px;
-      background: rgba(255, 255, 255, 0.12);
-      outline: none;
-      cursor: pointer;
-    }
-    .timeline-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--cyan);
-      box-shadow: 0 0 10px var(--cyan);
-      cursor: pointer;
-      border: 2px solid #fff;
-      transition: transform 0.1s;
-    }
-    .timeline-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.25);
-    }
-    .timeline-ticks {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      font-family: var(--font-mono);
-      color: var(--text-muted);
-    }
+  /* ── RIGHT ACTION FORMS ──────────────────────────────────────── */
+  .form-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .form-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .field label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .field-hint {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  input[type="text"], input[type="number"], select {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 7px 10px;
+    font-size: 12px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color .15s;
+    width: 100%;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    border-color: var(--accent);
+  }
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .checkbox-grid label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
 
-    .sim-clock-display {
-      font-family: var(--font-mono);
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--cyan);
-      background: rgba(6, 182, 212, 0.08);
-      border: 1px solid rgba(6, 182, 212, 0.25);
-      padding: 6px 12px;
-      border-radius: 8px;
-      white-space: nowrap;
-    }
+  .btn {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font);
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: #059669; }
+  .btn-danger {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-danger:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
 
-    .speed-selector-cluster {
-      display: flex;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 2px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-    .btn-speed {
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn-speed:hover {
-      color: #fff;
-    }
-    .btn-speed.active {
-      background: var(--cyan);
-      color: #06090e;
-      font-weight: 800;
-    }
+  /* ── TOAST ───────────────────────────────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    color: var(--text);
+    box-shadow: 0 4px 16px rgba(0,0,0,.5);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all .2s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.toast-ok { border-color: var(--green); color: var(--green); }
+  #toast.toast-warn { border-color: var(--amber); color: var(--amber); }
+  #toast.toast-err { border-color: var(--red); color: var(--red); }
 
-    /* THREE MODULAR LOWER PANELS */
-    .modular-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 16px;
-    }
-
-    .module-card {
-      background: var(--bg-card);
-      backdrop-filter: blur(14px);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      min-height: 380px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-    }
-
-    .module-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-    }
-    .module-title {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .module-badge {
-      font-size: 10px;
-      font-family: var(--font-mono);
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 12px;
-    }
-
-    /* FLEET ROSTER (DYNAMIC LIST) */
-    .fleet-list-scroll {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      overflow-y: auto;
-      max-height: 290px;
-      padding-right: 4px;
-    }
-    .fleet-list-scroll::-webkit-scrollbar {
-      width: 4px;
-    }
-    .fleet-list-scroll::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 2px;
-    }
-
-    .vessel-card-row {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .vessel-card-row:hover, .vessel-card-row.selected {
-      background: rgba(6, 182, 212, 0.08);
-      border-color: var(--cyan);
-      transform: translateX(2px);
-    }
-    .vessel-card-row.is-anchored {
-      border-color: rgba(244, 63, 94, 0.4);
-      background: rgba(244, 63, 94, 0.05);
-    }
-    .vessel-row-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .vessel-name-txt {
-      font-size: 12px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .vessel-sub-txt {
-      font-size: 10px;
-      color: var(--text-dim);
-    }
-    .vessel-status-tag {
-      font-size: 10px;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-    .tag-berthed {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--emerald);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-    .tag-anchored {
-      background: rgba(244, 63, 94, 0.15);
-      color: var(--rose);
-      border: 1px solid rgba(244, 63, 94, 0.3);
-    }
-    .tag-transit {
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--amber);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-    .tag-departed {
-      background: rgba(100, 116, 139, 0.15);
-      color: var(--text-muted);
-      border: 1px solid rgba(100, 116, 139, 0.3);
-    }
-    .vessel-progress-bar {
-      width: 100%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-top: 2px;
-    }
-    .vessel-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--cyan), var(--emerald));
-      border-radius: 2px;
-      transition: width 0.3s;
-    }
-
-    /* COPILOT CARD */
-    .copilot-content {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      flex: 1;
-    }
-    .copilot-rec-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(6, 182, 212, 0.07);
-      border: 1px solid rgba(6, 182, 212, 0.2);
-      border-radius: 8px;
-      padding: 8px 12px;
-    }
-    .copilot-title-text {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-    .copilot-confidence-pill {
-      font-size: 10px;
-      font-family: var(--font-mono);
-      font-weight: 700;
-      color: var(--cyan);
-    }
-    .copilot-rationale-box {
-      font-size: 11px;
-      color: var(--text-dim);
-      line-height: 1.4;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-    }
-    .safety-proofs-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .proof-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 10px;
-    }
-    .proof-icon-ok {
-      color: var(--emerald);
-      font-weight: 800;
-    }
-    .copilot-action-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-      margin-top: auto;
-    }
-    .btn-copilot {
-      padding: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      transition: all 0.2s;
-      border: 1px solid transparent;
-    }
-    .btn-copilot-approve {
-      background: rgba(16, 185, 129, 0.2);
-      color: #6ee7b7;
-      border-color: rgba(16, 185, 129, 0.4);
-    }
-    .btn-copilot-approve:hover {
-      background: rgba(16, 185, 129, 0.35);
-      border-color: var(--emerald);
-    }
-    .btn-copilot-modify {
-      background: rgba(245, 158, 11, 0.15);
-      color: #fde68a;
-      border-color: rgba(245, 158, 11, 0.3);
-    }
-    .btn-copilot-reject {
-      background: rgba(244, 63, 94, 0.15);
-      color: #fca5a5;
-      border-color: rgba(244, 63, 94, 0.3);
-    }
-
-    /* GREEN ESG & TRUST LEDGER */
-    .green-trust-content {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      flex: 1;
-    }
-    .sub-section-box {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .sub-section-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .toggle-switch-wrap {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-    .merkle-root-display {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      color: #c4b5fd;
-      background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.25);
-      padding: 6px 8px;
-      border-radius: 6px;
-      word-break: break-all;
-    }
-    .tamper-test-btns {
-      display: flex;
-      gap: 8px;
-    }
-    .btn-tamper-action {
-      flex: 1;
-      padding: 6px 10px;
-      font-size: 10px;
-      font-weight: 700;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
-    .btn-audit-ok {
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: var(--emerald);
-    }
-    .btn-audit-tamper {
-      background: rgba(244, 63, 94, 0.15);
-      border: 1px solid rgba(244, 63, 94, 0.3);
-      color: var(--rose);
-    }
-
-    /* MODAL OVERLAYS */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(4, 7, 12, 0.85);
-      backdrop-filter: blur(10px);
-      z-index: 200;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .modal-backdrop.open {
-      display: flex;
-    }
-    .modal-window {
-      background: #0f172a;
-      border: 1px solid var(--border-bright);
-      border-radius: 12px;
-      width: 100%;
-      max-width: 520px;
-      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
-      padding: 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .modal-head-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-    }
-    .modal-title-txt {
-      font-size: 15px;
-      font-weight: 700;
-    }
-    .btn-close-x {
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .modal-form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .modal-form-group label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .modal-input, .modal-select {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border);
-      color: #fff;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-    }
-    .modal-input:focus, .modal-select:focus {
-      border-color: var(--cyan);
-    }
-    .modal-actions-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 8px;
-    }
-
-    /* ARCHITECTURE MODAL & PIPELINE FLOW STYLES */
-    .arch-flow-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin: 14px 0;
-      position: relative;
-    }
-    .arch-layer-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: relative;
-      transition: all 0.25s ease;
-    }
-    .arch-layer-card.active-layer {
-      border-color: var(--cyan);
-      background: rgba(6, 182, 212, 0.08);
-      box-shadow: 0 0 16px var(--cyan-glow);
-    }
-    .arch-layer-card.running-layer {
-      border-color: var(--amber);
-      box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
-      animation: pulseLayer 0.8s ease-in-out infinite alternate;
-    }
-    @keyframes pulseLayer {
-      from { transform: scale(1); }
-      to { transform: scale(1.02); }
-    }
-    .arch-layer-num {
-      font-size: 10px;
-      font-family: var(--font-mono);
-      font-weight: 700;
-      color: var(--cyan);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .arch-layer-title {
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1.25;
-      color: #fff;
-    }
-    .arch-layer-sub {
-      font-size: 10px;
-      color: var(--text-dim);
-      font-style: italic;
-    }
-    .arch-layer-desc {
-      font-size: 10px;
-      color: var(--text-muted);
-      line-height: 1.35;
-      margin-top: 2px;
-    }
-    .arch-layer-metric-pill {
-      margin-top: auto;
-      font-size: 10px;
-      font-family: var(--font-mono);
-      font-weight: 600;
-      padding: 4px 6px;
-      border-radius: 4px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      display: flex;
-      justify-content: space-between;
-    }
-    .arch-flow-summary-banner {
-      background: rgba(6, 182, 212, 0.06);
-      border: 1px solid rgba(6, 182, 212, 0.25);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 11px;
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .arch-flow-summary-banner strong {
-      color: var(--cyan);
-      font-family: var(--font-mono);
-    }
-    .arch-payload-inspector {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      color: #94a3b8;
-      max-height: 160px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
-    /* TOAST NOTIFICATION */
-    .toast-pill {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--cyan);
-      border-radius: 8px;
-      padding: 12px 18px;
-      font-size: 12px;
-      color: #fff;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px var(--cyan-glow);
-      z-index: 300;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      animation: slideInToast 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes slideInToast {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-  </style>
+  @media (max-width: 960px) {
+    .workspace {
+      grid-template-columns: 1fr;
+      height: auto;
+      overflow: visible;
+    }
+    .panel { height: auto; overflow: visible; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
 </head>
 <body>
 
-  <!-- TOP MARITIME OPERATIONS HEADER -->
-  <header class="port-header">
-    <div class="brand-cluster">
-      <div class="logo-radar">
-        <div class="radar-sweep"></div>
-        <div class="radar-center-dot"></div>
-      </div>
-      <div>
-        <div class="brand-title-row">
-          <span class="brand-name">BlockPort AI</span>
-          <span class="badge-dt">Digital Twin Autonomous Port Simulation</span>
-        </div>
-        <div class="brand-sub">Real-Time Autonomous Maritime Operations &amp; Dynamic Berthing Engine</div>
-      </div>
+<!-- ── HEADER ───────────────────────────────────────────────────── -->
+<header>
+  <div class="header-left">
+    <div class="logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 17l9 4 9-4V7L12 3 3 7v10z"/><path d="M12 3v18"/><path d="M3 7l9 4 9-4"/>
+      </svg>
+      BlockPort AI
     </div>
+    <span class="logo-badge">MIP LIVE MANAGER</span>
+  </div>
 
-    <!-- METOCEAN PORT WEATHER -->
-    <div class="header-center-info">
-      <div class="live-pulse-badge">
-        <div class="live-dot"></div>
-        <span>LIVE SIMULATION</span>
-      </div>
-      <span class="metocean-sep">&bull;</span>
-      <div class="metocean-item">
-        <span>Wind:</span>
-        <strong id="weather-wind">14.2 kn NW</strong>
-      </div>
-      <span class="metocean-sep">&bull;</span>
-      <div class="metocean-item">
-        <span>Wave:</span>
-        <strong id="weather-wave">0.8 m</strong>
-      </div>
-      <span class="metocean-sep">&bull;</span>
-      <div class="metocean-item">
-        <span>Tide:</span>
-        <strong id="weather-tide">+1.4m Slack</strong>
-      </div>
-      <span class="metocean-sep">&bull;</span>
-      <div class="metocean-item">
-        <span>Port UTC:</span>
-        <strong id="port-realtime-clock">--:--:-- UTC</strong>
-      </div>
+  <!-- PROJECT PERFORMANCE & SAVINGS STATISTICS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-label">Cost Saved</span>
+      <span class="stat-value stat-green" id="stat-cost-saved">$14,400</span>
     </div>
-
-    <!-- QUICK ACTIONS -->
-    <div class="header-actions">
-      <button class="btn-action" onclick="openArchitectureModal()" style="background: rgba(6, 182, 212, 0.15); border-color: var(--cyan); color: #fff;">
-        <span>&#9881;</span> 5-Layer Architecture
-      </button>
-      <button class="btn-action btn-action-primary" onclick="openModal('modal-dispatch')">
-        <span>+</span> Dispatch Vessel
-      </button>
-      <button class="btn-action" onclick="openModal('modal-presets')">
-        <span>⚡</span> Presets &amp; Disruptions
-      </button>
-      <button class="btn-action" onclick="openModal('modal-scorecard')">
-        <span>📊</span> Targets Scorecard
-      </button>
-      <button class="btn-action" onclick="resetDigitalTwinPreset('section7')" title="Reset port to Section 7 default state">
-        <span>↺</span> Reset
-      </button>
+    <div class="stat-item">
+      <span class="stat-label">CO₂ Controlled</span>
+      <span class="stat-value stat-blue" id="stat-co2-saved">13,678.6 kg (-13.8%)</span>
     </div>
-  </header>
-
-  <!-- MAIN DASHBOARD CONTENT -->
-  <main class="port-dashboard">
-
-    <!-- 6 KEY METRICS STRIP -->
-    <div class="kpi-strip">
-      <div class="kpi-pill-card" style="--accent-bar: var(--cyan);">
-        <div class="kpi-label">Active Berths <span id="kpi-berth-pct">83%</span></div>
-        <div class="kpi-val" id="kpi-berth-count">5 / 6</div>
-        <div class="kpi-sub">Terminal A, B &amp; C Quays</div>
-      </div>
-
-      <div class="kpi-pill-card" style="--accent-bar: var(--blue);">
-        <div class="kpi-label">Fleet in Port <span id="kpi-fleet-pct">100% On-Time</span></div>
-        <div class="kpi-val" id="kpi-fleet-count">5 Ships</div>
-        <div class="kpi-sub" id="kpi-fleet-sub">Dynamic AIS Telemetry</div>
-      </div>
-
-      <div class="kpi-pill-card" style="--accent-bar: var(--emerald);">
-        <div class="kpi-label">Wait Time Saved <span id="kpi-wait-badge" style="color: var(--emerald);">-100%</span></div>
-        <div class="kpi-val" style="color: var(--emerald);" id="kpi-wait-saved">12.0 h</div>
-        <div class="kpi-sub" id="kpi-wait-sub">Zero anchorage queue in Opt B</div>
-      </div>
-
-      <div class="kpi-pill-card" style="--accent-bar: var(--amber);">
-        <div class="kpi-label">Demurrage Saved</div>
-        <div class="kpi-val" style="color: var(--amber);" id="kpi-demurrage-saved">$14,400</div>
-        <div class="kpi-sub">Charterparty demurrage avoided</div>
-      </div>
-
-      <div class="kpi-pill-card" style="--accent-bar: var(--emerald);">
-        <div class="kpi-label">CO2 Abated <span style="color: var(--emerald);">-13.8%</span></div>
-        <div class="kpi-val" style="color: var(--emerald);" id="kpi-co2-saved">13,678 kg</div>
-        <div class="kpi-sub">Cold-ironing + zero idling</div>
-      </div>
-
-      <div class="kpi-pill-card" style="--accent-bar: var(--purple);">
-        <div class="kpi-label">Trust Ledger</div>
-        <div class="kpi-val" style="color: #c4b5fd;" id="kpi-ledger-block">Block #2</div>
-        <div class="kpi-sub">RFC 6962 Merkle Verified</div>
-      </div>
+    <div class="stat-item">
+      <span class="stat-label">Wait Eliminated</span>
+      <span class="stat-value stat-amber" id="stat-wait-saved">12.0h (100%)</span>
     </div>
+  </div>
 
-    <!-- DIGITAL TWIN HARBOR STAGE -->
-    <div class="twin-stage-container">
-      <div class="stage-top-bar">
-        <div class="stage-title-wrap">
-          <div class="stage-title">
-            <span>&#9875;</span> Harbor Nautical Digital Twin &amp; AIS Radar
-          </div>
-          <span class="stage-preset-tag" id="current-scenario-label">Section 7 Contested Terminal A Benchmark</span>
-        </div>
+  <div class="header-right">
+    <button class="btn btn-danger" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="clearFleet()">
+      ✕ Clear Fleet
+    </button>
+  </div>
+</header>
 
-        <!-- SCENARIO TOGGLE -->
-        <div class="scenario-toggle-cluster">
-          <button class="btn-scenario-opt" id="btn-opt-a" onclick="switchScenarioMode('a')">
-            <span>&#9888; Option A (FCFS Queue / 12h Anchor)</span>
-          </button>
-          <button class="btn-scenario-opt active-b" id="btn-opt-b" onclick="switchScenarioMode('b')">
-            <span>&#10003; Option B (Autonomous Optimization / Shore Power)</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- SVG INTERACTIVE MAP -->
-      <div class="svg-canvas-wrapper" id="map-wrapper">
-        <svg id="harbor-svg" viewBox="0 0 1000 400" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <!-- Water gradients -->
-            <radialGradient id="waterDeepGrad" cx="30%" cy="50%" r="70%">
-              <stop offset="0%" stop-color="#0e1726" />
-              <stop offset="50%" stop-color="#0a101b" />
-              <stop offset="100%" stop-color="#06090e" />
-            </radialGradient>
-            <!-- Quay pier gradient -->
-            <linearGradient id="quayGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#1f293d" />
-              <stop offset="100%" stop-color="#131b29" />
-            </linearGradient>
-            <!-- Neon route glow -->
-            <filter id="routeGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          <!-- Water background -->
-          <rect x="0" y="0" width="1000" height="400" fill="url(#waterDeepGrad)" />
-
-          <!-- Bathymetry Depth Contours (10m, 15m, 20m) -->
-          <path d="M 0,60 Q 200,80 380,40 T 1000,50" fill="none" stroke="rgba(6, 182, 212, 0.05)" stroke-width="1" />
-          <path d="M 0,220 Q 250,200 450,240 T 1000,220" fill="none" stroke="rgba(6, 182, 212, 0.05)" stroke-width="1" />
-          <path d="M 0,340 Q 300,320 600,350 T 1000,330" fill="none" stroke="rgba(6, 182, 212, 0.05)" stroke-width="1" />
-
-          <!-- Main Navigation Fairway Channel (Dredged 18.0m deep) -->
-          <path d="M -50,165 L 420,165" fill="none" stroke="rgba(6, 182, 212, 0.15)" stroke-width="60" stroke-linecap="round" />
-          <line x1="-50" y1="165" x2="420" y2="165" stroke="rgba(6, 182, 212, 0.4)" stroke-width="2" stroke-dasharray="10 8" />
-
-          <!-- Turning Basin (420, 165) -->
-          <circle cx="420" cy="165" r="55" fill="rgba(6, 182, 212, 0.04)" stroke="rgba(6, 182, 212, 0.3)" stroke-width="1.5" stroke-dasharray="6 4" />
-          <text x="420" y="145" text-anchor="middle" fill="rgba(6, 182, 212, 0.6)" font-size="9" font-weight="700">TURNING BASIN (Ø 110m)</text>
-
-          <!-- Lateral Channel Navigation Buoys (Flashing) -->
-          <g transform="translate(140, 130)">
-            <circle cx="0" cy="0" r="4" fill="#10b981"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite" /></circle>
-            <text x="0" y="-8" text-anchor="middle" fill="#10b981" font-size="7">#1 PORT</text>
-          </g>
-          <g transform="translate(140, 200)">
-            <circle cx="0" cy="0" r="4" fill="#f43f5e"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite" /></circle>
-            <text x="0" y="14" text-anchor="middle" fill="#f43f5e" font-size="7">#2 STBD</text>
-          </g>
-          <g transform="translate(320, 130)">
-            <circle cx="0" cy="0" r="4" fill="#10b981"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite" /></circle>
-            <text x="0" y="-8" text-anchor="middle" fill="#10b981" font-size="7">#3 PORT</text>
-          </g>
-          <g transform="translate(320, 200)">
-            <circle cx="0" cy="0" r="4" fill="#f43f5e"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite" /></circle>
-            <text x="0" y="14" text-anchor="middle" fill="#f43f5e" font-size="7">#4 STBD</text>
-          </g>
-
-          <!-- ANCHORAGE ALPHA (WAITING ZONE) -->
-          <g id="anchorage-alpha-zone" transform="translate(170, 75)">
-            <circle cx="0" cy="0" r="46" fill="rgba(244, 63, 94, 0.05)" stroke="rgba(244, 63, 94, 0.35)" stroke-width="1.5" stroke-dasharray="5 4" />
-            <text x="0" y="-52" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="700">ANCHORAGE ALPHA</text>
-            <text x="0" y="6" text-anchor="middle" fill="rgba(244, 63, 94, 0.7)" font-size="20">&#9875;</text>
-            <!-- Dynamic Demurrage Warning Tag -->
-            <g id="anchor-demurrage-alert" style="display: none;">
-              <rect x="-70" y="18" width="140" height="20" rx="4" fill="rgba(244, 63, 94, 0.95)" />
-              <text x="0" y="32" text-anchor="middle" fill="#fff" font-size="10" font-weight="800">12h DELAY ($14,400)</text>
-            </g>
-          </g>
-
-          <!-- ANCHORAGE BRAVO (SECONDARY RESERVE) -->
-          <g id="anchorage-bravo-zone" transform="translate(170, 275)">
-            <circle cx="0" cy="0" r="38" fill="rgba(100, 116, 139, 0.04)" stroke="rgba(100, 116, 139, 0.25)" stroke-width="1" stroke-dasharray="4 4" />
-            <text x="0" y="48" text-anchor="middle" fill="#64748b" font-size="9" font-weight="600">ANCHORAGE BRAVO (RESERVE)</text>
-          </g>
-
-          <!-- ================= QUAYS & BERTHS ================= -->
-
-          <!-- TERMINAL A (NORTH QUAY - CONTAINER) -->
-          <path d="M 460,0 L 1000,0 L 1000,90 L 490,90 L 460,60 Z" fill="url(#quayGrad)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" />
-          <text x="495" y="22" fill="#e2e8f0" font-size="11" font-weight="800">TERMINAL A (NORTH CONTAINER QUAY)</text>
-
-          <!-- Berth A1 -->
-          <g transform="translate(480, 90)">
-            <line x1="0" y1="0" x2="220" y2="0" stroke="#06b6d4" stroke-width="4" />
-            <rect x="5" y="-22" width="210" height="18" rx="3" fill="rgba(0, 0, 0, 0.6)" />
-            <text x="12" y="-9" fill="#38bdf8" font-size="9" font-weight="700">Berth A1 (400m / 16.0m) &bull; 4 STS Cranes</text>
-          </g>
-
-          <!-- Berth A2 -->
-          <g transform="translate(730, 90)">
-            <line x1="0" y1="0" x2="230" y2="0" stroke="#3b82f6" stroke-width="4" />
-            <rect x="5" y="-22" width="220" height="18" rx="3" fill="rgba(0, 0, 0, 0.6)" />
-            <text x="12" y="-9" fill="#60a5fa" font-size="9" font-weight="700">Berth A2 (350m / 15.0m) &bull; 4 STS Cranes</text>
-          </g>
-
-          <!-- TERMINAL B (MID QUAY - SHORE POWER & FEEDER) -->
-          <path d="M 480,210 L 1000,210 L 1000,245 L 510,245 L 480,210 Z" fill="url(#quayGrad)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" />
-
-          <!-- Berth B1 (Shore Power Equipped) -->
-          <g transform="translate(490, 210)">
-            <line x1="0" y1="0" x2="220" y2="0" stroke="#10b981" stroke-width="4" />
-            <rect x="5" y="8" width="210" height="18" rx="3" fill="rgba(0, 0, 0, 0.6)" />
-            <text x="12" y="20" fill="#34d399" font-size="9" font-weight="700">Berth B1 (330m / 14.5m) &bull; AMP Shore Power</text>
-            <!-- Idle Warning Flag in Option A -->
-            <g id="b1-idle-flag" style="display: none;">
-              <rect x="15" y="-22" width="165" height="18" rx="4" fill="rgba(245, 158, 11, 0.25)" stroke="rgba(245, 158, 11, 0.6)" />
-              <text x="97" y="-9" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="800">&#9888; UNUSED IN OPTION A</text>
-            </g>
-          </g>
-
-          <!-- Berth B2 -->
-          <g transform="translate(730, 210)">
-            <line x1="0" y1="0" x2="220" y2="0" stroke="#0ea5e9" stroke-width="4" />
-            <rect x="5" y="8" width="210" height="18" rx="3" fill="rgba(0, 0, 0, 0.6)" />
-            <text x="12" y="20" fill="#38bdf8" font-size="9" font-weight="700">Berth B2 (320m / 14.0m) &bull; Feeder Reserve</text>
-          </g>
-
-          <!-- TERMINAL C (SOUTH BASIN - BULK & ENERGY) -->
-          <path d="M 440,390 L 1000,390 L 1000,330 L 480,330 L 440,365 Z" fill="url(#quayGrad)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" />
-
-          <!-- Berth C1 (Bulk) -->
-          <g transform="translate(470, 330)">
-            <line x1="0" y1="0" x2="220" y2="0" stroke="#f59e0b" stroke-width="4" />
-            <rect x="5" y="8" width="210" height="18" rx="3" fill="rgba(0, 0, 0, 0.6)" />
-            <text x="12" y="20" fill="#fbbf24" font-size="9" font-weight="700">Berth C1 (340m / 17.5m) &bull; Dry Bulk Ore Grab</text>
-          </g>
-
-          <!-- Berth C2 (LNG) -->
-          <g transform="translate(720, 330)">
-            <line x1="0" y1="0" x2="230" y2="0" stroke="#8b5cf6" stroke-width="4" />
-            <rect x="5" y="8" width="220" height="18" rx="3" fill="rgba(0, 0, 0, 0.6)" />
-            <text x="12" y="20" fill="#c4b5fd" font-size="9" font-weight="700">Berth C2 (320m / 16.5m) &bull; Clean LNG Arms</text>
-          </g>
-
-          <!-- DYNAMIC ROUTE LINES -->
-          <path id="route-guidance-optb" d="M 360,165 Q 430,165 480,195 T 600,210" fill="none" stroke="#10b981" stroke-width="2.5" stroke-dasharray="6 4" filter="url(#routeGlow)" />
-          <path id="route-guidance-opta" d="M 280,165 Q 230,150 170,85" fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="5 4" style="display: none;" />
-
-          <!-- DYNAMIC VESSEL EFFECTS (Tugs, Wake, Shore Power Cable) -->
-          <g id="vessel-effects-layer"></g>
-
-          <!-- ================= DYNAMIC VESSELS LAYER ================= -->
-          <!-- All vessels are dynamically spawned, rendered, and animated in this layer -->
-          <g id="dynamic-vessels-layer"></g>
-
-          <!-- SELECTION & RADAR FOCUS LAYER -->
-          <g id="selection-highlight-layer"></g>
-        </svg>
-
-        <!-- FLOATING VESSEL TELEMETRY HUD -->
-        <div class="vessel-hud-card" id="vessel-hud">
-          <div class="hud-title">
-            <span id="hud-name">MV Delayed</span>
-            <span id="hud-type-badge" style="color: var(--cyan);">CONTAINER</span>
-          </div>
-          <div class="hud-row">
-            <span>Status:</span>
-            <strong id="hud-status" style="color: var(--emerald);">BERTHED</strong>
-          </div>
-          <div class="hud-row">
-            <span>Berth Assigned:</span>
-            <strong id="hud-berth">Berth B1</strong>
-          </div>
-          <div class="hud-row">
-            <span>Cargo / Dim:</span>
-            <strong id="hud-cargo">960 TEU &bull; 300m LOA</strong>
-          </div>
-          <div class="hud-row">
-            <span>Shore Power (AMP):</span>
-            <strong id="hud-shore" style="color: var(--emerald);">CONNECTED (6.6 kV)</strong>
-          </div>
-          <div class="hud-row">
-            <span>Demurrage Incurred:</span>
-            <strong id="hud-demurrage" style="color: var(--text-dim);">$0.00</strong>
-          </div>
-        </div>
-      </div>
-
-      <!-- PLAYBACK & REAL-TIME CONTROLS TOOLBAR -->
-      <div class="playback-toolbar">
-        <button class="btn-realtime-mode active" id="btn-realtime-toggle" onclick="toggleRealTimeMode()">
-          <span class="live-dot" style="width: 6px; height: 6px;"></span>
-          <span id="realtime-mode-txt">LIVE REAL-TIME</span>
-        </button>
-
-        <button class="btn-play-ctrl" id="btn-play-toggle" onclick="togglePlayPause()" title="Play / Pause simulation">
-          <span id="play-pause-icon">&#10074;&#10074;</span>
-        </button>
-
-        <!-- TIMELINE SCRUBBER -->
-        <div class="timeline-scrubber-wrap">
-          <input type="range" class="timeline-slider" id="timeline-slider" min="0" max="24" step="0.05" value="8" oninput="onScrubSlider(this.value)">
-          <div class="timeline-ticks">
-            <span>00:00 Night</span>
-            <span>06:00 Dawn</span>
-            <span>08:00 Arrival Window</span>
-            <span>12:00 Midday Operations</span>
-            <span>18:00 Dusk</span>
-            <span>24:00 Turnaround</span>
-          </div>
-        </div>
-
-        <div class="sim-clock-display" id="sim-clock-display">
-          08:00:00 UTC
-        </div>
-
-        <div class="speed-selector-cluster">
-          <button class="btn-speed" id="spd-1" onclick="setPlaybackSpeed(1)">1x</button>
-          <button class="btn-speed active" id="spd-10" onclick="setPlaybackSpeed(10)">10x</button>
-          <button class="btn-speed" id="spd-30" onclick="setPlaybackSpeed(30)">30x</button>
-          <button class="btn-speed" id="spd-60" onclick="setPlaybackSpeed(60)">60x</button>
-        </div>
-      </div>
+<!-- ── MASTER SIMULATION CLOCK STRIP ────────────────────────────── -->
+<div class="clock-strip">
+  <div class="clock-display-group">
+    <div class="clock-time">
+      <div class="clock-dot" id="clock-dot"></div>
+      <span id="clock-display">DAY 1 · 08:00 UTC</span>
     </div>
+    <div class="clock-controls">
+      <button class="btn-clock" id="btn-play-pause" onclick="togglePlayPause()">
+        ⏸ Pause
+      </button>
+      <button class="btn-clock active" id="spd-1" onclick="setSpeed(1)">1x</button>
+      <button class="btn-clock" id="spd-5" onclick="setSpeed(5)">5x</button>
+      <button class="btn-clock" id="spd-15" onclick="setSpeed(15)">15x</button>
+      <button class="btn-clock" id="spd-60" onclick="setSpeed(60)">60x</button>
+    </div>
+  </div>
 
-    <!-- THREE MODULAR LOWER PANELS -->
-    <div class="modular-grid">
+  <!-- MANUAL CLOCK SEEK CONTROLS -->
+  <div class="clock-seek-group">
+    <span style="font-size: 11px; color: var(--muted); white-space: nowrap;">Seek Time:</span>
+    <input type="range" class="clock-slider" id="clock-slider" min="0" max="48" step="0.25" value="8" oninput="onSliderInput(this.value)" onchange="onSliderChange(this.value)" />
+    <span class="clock-slider-label" id="slider-label">08:00 UTC</span>
+    <button class="btn-clock" onclick="stepClock(1.0)">+1h</button>
+    <button class="btn-clock" onclick="stepClock(4.0)">+4h</button>
+    <button class="btn-clock" onclick="resetClock(8.0)">Reset 08:00</button>
+  </div>
+</div>
 
-      <!-- 1. ACTIVE FLEET MOVEMENTS & BERTHING ROSTER -->
-      <div class="module-card">
-        <div class="module-head">
-          <div class="module-title">
-            <span>&#9875;</span> Live Fleet &amp; Berths
+<!-- ── THREE COLUMN OPERATIONAL WORKSPACE ───────────────────────── -->
+<div class="workspace">
+
+  <!-- LEFT PANEL: PORT STATIONS & TERMINALS -->
+  <div class="panel">
+    <div class="panel-head">
+      Port Layout &amp; Stations
+      <span id="berth-count-pill" style="font-family: var(--mono); color: var(--accent);">—</span>
+    </div>
+    <div class="panel-body" id="layout-panel">
+      <div style="text-align: center; color: var(--muted); padding: 40px 0;">Loading port stations…</div>
+    </div>
+  </div>
+
+  <!-- CENTER PANEL: DYNAMIC FLEET & REAL-TIME STATION ACTIVITY -->
+  <div class="panel">
+    <div class="panel-head">
+      Fleet Operations &amp; Docked Activity
+      <span id="vessel-counts-summary" style="font-family: var(--mono); font-size: 11px; color: var(--muted);">—</span>
+    </div>
+    <div class="panel-body" id="fleet-panel">
+      <div style="text-align: center; color: var(--muted); padding: 40px 0;">Loading vessel fleet…</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: DISPATCH & CONFIGURATION DRAWER -->
+  <div class="panel">
+    <div class="panel-head">Port Dispatcher</div>
+    <div class="panel-body">
+
+      <!-- PHYSICAL METOCEAN & GPS CONDITIONS -->
+      <div class="form-box" style="border-left: 3px solid #38bdf8;">
+        <div class="form-title">
+          <span>🌪 Physics &amp; GPS Model</span>
+          <span style="font-size: 10px; color: #38bdf8; font-weight: 600;">Empirical Engine</span>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Wind Speed (kn)</label>
+            <input id="env-wind-speed" type="number" value="15" min="0" max="65" step="1" oninput="applyPhysicalConditions()" />
           </div>
-          <span class="module-badge" style="background: rgba(6, 182, 212, 0.15); color: var(--cyan);" id="fleet-count-badge">5 Ships Tracked</span>
+          <div class="field">
+            <label>Wind Dir (°)</label>
+            <input id="env-wind-dir" type="number" value="115" min="0" max="360" step="5" oninput="applyPhysicalConditions()" />
+          </div>
         </div>
 
-        <!-- DYNAMIC VESSEL ROSTER -->
-        <div class="fleet-list-scroll" id="dynamic-fleet-list">
-          <!-- Dynamically populated from /api/dynamic/state -->
+        <div class="row2">
+          <div class="field">
+            <label>Wave Hs (m)</label>
+            <input id="env-wave-hs" type="number" value="1.2" min="0.1" max="10.0" step="0.1" oninput="applyPhysicalConditions()" />
+          </div>
+          <div class="field">
+            <label>Visibility (nmi)</label>
+            <input id="env-visibility" type="number" value="6.0" min="0.1" max="20" step="0.5" oninput="applyPhysicalConditions()" />
+          </div>
         </div>
 
-        <button class="btn-action" style="margin-top: auto; justify-content: center; font-size: 11px;" onclick="openModal('modal-dispatch')">
-          <span>+</span> Dispatch Another Vessel Call
-        </button>
+        <div class="field" style="margin-bottom: 8px;">
+          <label>Approach Channel Congestion</label>
+          <input id="env-congestion" type="range" min="0.0" max="1.0" step="0.05" value="0.2" oninput="document.getElementById('env-congestion-val').textContent=parseFloat(this.value).toFixed(2); applyPhysicalConditions();" />
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--muted); font-family:var(--mono);">
+            <span>Open (0.0)</span>
+            <span id="env-congestion-val" style="color:#38bdf8; font-weight:bold;">0.20</span>
+            <span>Jammed (1.0)</span>
+          </div>
+        </div>
+
+        <!-- LIVE NAVAL TELEMETRY READOUT -->
+        <div id="physics-telemetry-box" style="padding: 8px; background: rgba(15,23,42,0.65); border: 1px solid rgba(56,189,248,0.25); border-radius: var(--radius); font-size: 11px;">
+          <div style="font-size: 10px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 4px; display: flex; justify-content: space-between;">
+            <span>Hydro/Aerodynamic Telemetry</span>
+            <span id="telemetry-status-pill" style="color: #4ade80;">Active</span>
+          </div>
+          <div id="telemetry-content" style="color: var(--text); font-family: var(--mono); font-size: 10px; line-height: 1.5;">
+            Calculating real-time Kwon speed loss &amp; crane derating…
+          </div>
+        </div>
       </div>
 
-      <!-- 2. EXPLAINABLE AI COPILOT & HUMAN-IN-THE-LOOP GOVERNANCE -->
-      <div class="module-card">
-        <div class="module-head">
-          <div class="module-title">
-            <span>&#129302;</span> Autonomous Port Copilot
-          </div>
-          <span class="module-badge" id="copilot-decision-badge" style="background: rgba(245, 158, 11, 0.15); color: var(--amber);">PENDING REVIEW</span>
+      <!-- DISPATCH INCOMING SHIP -->
+      <div class="form-box">
+        <div class="form-title">
+          <span>＋ Incoming Vessel</span>
+          <span style="font-size: 10px; color: var(--accent); font-weight: normal;">Optimizer Dispatch</span>
         </div>
 
-        <div class="copilot-content">
-          <div class="copilot-rec-header">
-            <span class="copilot-title-text" id="copilot-title">Schedule Optimization Plan</span>
-            <span class="copilot-confidence-pill" id="copilot-conf">96% Confidence</span>
-          </div>
-
-          <div class="copilot-rationale-box" id="copilot-summary">
-            Reassigning MV Delayed from contested Terminal A to idle Berth B1 eliminates 12.0 hours of anchorage delay, saves $14,400 demurrage, and enables cold-ironing shoreside electricity abating 13,678 kg CO2.
-          </div>
-
-          <div style="font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
-            Automated Physical Safety Proofs:
-          </div>
-
-          <div class="safety-proofs-list" id="copilot-proofs-list">
-            <div class="proof-item">
-              <span class="proof-icon-ok">&#10003;</span>
-              <span><strong>LOA Clearance:</strong> 300m &le; Berth B1 330m (+30.0m buffer)</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-icon-ok">&#10003;</span>
-              <span><strong>Under-Keel Clearance:</strong> 12.0m Draft vs 14.5m Depth (+2.5m safe UKC)</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-icon-ok">&#10003;</span>
-              <span><strong>Cranes Allocated:</strong> 3 STS Post-Panamax Cranes operational</span>
-            </div>
-          </div>
-
-          <div class="copilot-action-row">
-            <button class="btn-copilot btn-copilot-approve" onclick="commitOperatorDecision('APPROVED')">
-              &#10003; Approve Plan
-            </button>
-            <button class="btn-copilot btn-copilot-modify" onclick="openModal('modal-modify')">
-              &#9998; Modify
-            </button>
-            <button class="btn-copilot btn-copilot-reject" onclick="commitOperatorDecision('REJECTED')">
-              &#10006; Reject
-            </button>
-          </div>
-
-          <div id="copilot-onchain-receipt" style="display: none; font-size: 10px; font-family: var(--font-mono); color: var(--emerald); padding: 4px; word-break: break-all;">
-            &#10003; Anchored on Merkle root: <code id="copilot-tx-hash">0x7f2a...</code>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. GREEN ESG & BLOCKCHAIN CRYPTOGRAPHIC TRUST -->
-      <div class="module-card">
-        <div class="module-head">
-          <div class="module-title">
-            <span>&#128279;</span> Green ESG &amp; Trust Ledger
-          </div>
-          <span class="module-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--emerald);">&#10003; 100% Cryptographic Audit</span>
+        <div class="field">
+          <label>Vessel Name</label>
+          <input id="v-name" type="text" placeholder="e.g. CMA CGM Palais" />
         </div>
 
-        <div class="green-trust-content">
-          <!-- Cold Ironing Substation -->
-          <div class="sub-section-box">
-            <div class="sub-section-head">
-              <span>Shore Power (AMP Cold-Ironing)</span>
-              <div class="toggle-switch-wrap">
-                <input type="checkbox" id="shore-power-toggle" checked onchange="onToggleShorePower(this.checked)" style="accent-color: var(--emerald); cursor: pointer;">
-                <label for="shore-power-toggle" style="cursor: pointer;">Active</label>
+        <div class="row2">
+          <div class="field">
+            <label>Vessel Type</label>
+            <select id="v-type" onchange="previewPhysicsETA()">
+              <option value="container">Container</option>
+              <option value="bulk">Bulk</option>
+              <option value="tanker">Tanker</option>
+              <option value="lng">LNG</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Nominal Arrival ETA (h)</label>
+            <input id="v-arrival" type="number" value="8" min="0" max="72" step="0.5" oninput="previewPhysicsETA()" />
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Length (LOA m)</label>
+            <input id="v-loa" type="number" value="300" min="50" max="500" oninput="previewPhysicsETA()" />
+          </div>
+          <div class="field">
+            <label>Draft (m)</label>
+            <input id="v-draft" type="number" value="12" min="3" max="25" step="0.5" oninput="previewPhysicsETA()" />
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Cargo Units</label>
+            <input id="v-cargo" type="number" value="1200" min="10" oninput="previewPhysicsETA()" />
+          </div>
+          <div class="field">
+            <label>Docking Duration (h)</label>
+            <input id="v-dock-hours" type="number" value="12" min="1" max="96" step="0.5" oninput="previewPhysicsETA()" />
+            <div class="field-hint">Fixed time ship stays docked</div>
+          </div>
+        </div>
+
+        <!-- GPS NAVIGATION & PHYSICAL MODIFIER ACCORDION -->
+        <div style="margin: 8px 0 10px 0; padding: 8px 10px; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25); border-radius: var(--radius);">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; font-weight: 600; color: #93c5fd; margin: 0;">
+            <input type="checkbox" id="v-apply-physics" checked onchange="togglePhysicsFields(this.checked)" />
+            <span>Apply Physics &amp; GPS Model to Times</span>
+          </label>
+          <div id="v-physics-fields" style="margin-top: 8px;">
+            <div class="row2">
+              <div class="field">
+                <label>GPS Dist to Port (nmi)</label>
+                <input id="v-gps-dist" type="number" value="30.0" min="0.5" max="300" step="0.5" oninput="previewPhysicsETA()" />
+              </div>
+              <div class="field">
+                <label>Cruising SOG (kn)</label>
+                <input id="v-sog" type="number" value="18.0" min="4" max="30" step="0.5" oninput="previewPhysicsETA()" />
               </div>
             </div>
-            <div style="font-size: 11px; color: var(--text-dim);">
-              Net footprint: <strong style="color: var(--emerald);" id="net-footprint-label">85,512 kg CO2 (-13.8%)</strong>
-            </div>
-            <div style="font-size: 10px; color: var(--text-muted);">
-              Eliminates auxiliary diesel generator combustion while berthed at Berth B1.
+            <div class="field-hint" id="v-physics-preview-hint" style="color: #60a5fa; font-family: var(--mono); font-size: 10px; margin-top: 4px; line-height: 1.4;">
+              ⚡ Ready: Computing ETA &amp; dock modifications...
             </div>
           </div>
-
-          <!-- RFC 6962 Blockchain Verification -->
-          <div class="sub-section-box">
-            <div class="sub-section-head">
-              <span>RFC 8785 + RFC 6962 Merkle Lab</span>
-              <span style="font-size: 10px; font-family: var(--font-mono); color: #c4b5fd;">SHA-256 Digest</span>
-            </div>
-            <div class="merkle-root-display" id="merkle-root-text">
-              Merkle Root: 5837b1b69964549c3f71938494a36022698269bcb358b3cd...
-            </div>
-            <div class="tamper-test-btns">
-              <button class="btn-tamper-action btn-audit-ok" onclick="testDataIntegrityVerification(false)">
-                &#10003; Verify Authentic
-              </button>
-              <button class="btn-tamper-action btn-audit-tamper" onclick="testDataIntegrityVerification(true)">
-                &#9888; Test Tampering
-              </button>
-            </div>
-            <div id="tamper-feedback-box" style="display: none; font-size: 10px; padding: 6px 8px; border-radius: 4px; line-height: 1.3;"></div>
-          </div>
         </div>
-      </div>
 
-    </div>
-  </main>
-
-  <!-- ==================== MODALS ==================== -->
-
-  <!-- MODAL: DISPATCH VESSEL -->
-  <div class="modal-backdrop" id="modal-dispatch">
-    <div class="modal-window">
-      <div class="modal-head-row">
-        <div class="modal-title-txt">&#9875; Dispatch New Vessel Call</div>
-        <button class="btn-close-x" onclick="closeModal('modal-dispatch')">&#10006;</button>
-      </div>
-      <div class="modal-form-group">
-        <label>Vessel Name:</label>
-        <input type="text" class="modal-input" id="inp-vessel-name" value="MV Pacific Voyager">
-      </div>
-      <div class="modal-form-group">
-        <label>Cargo Type:</label>
-        <select class="modal-select" id="inp-vessel-type">
-          <option value="container" selected>Container (TEU)</option>
-          <option value="bulk">Dry Bulk (Iron Ore / Grain)</option>
-          <option value="tanker">Liquid Tanker (Crude / Chemicals)</option>
-          <option value="lng">Clean Energy (LNG Cryogenic)</option>
-        </select>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="modal-form-group">
-          <label>LOA Length (m):</label>
-          <input type="number" class="modal-input" id="inp-vessel-loa" value="280" step="10">
-        </div>
-        <div class="modal-form-group">
-          <label>Draft Depth (m):</label>
-          <input type="number" class="modal-input" id="inp-vessel-draft" value="11.5" step="0.5">
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="modal-form-group">
-          <label>Cargo Units (TEU / Tonnes):</label>
-          <input type="number" class="modal-input" id="inp-vessel-cargo" value="1100" step="50">
-        </div>
-        <div class="modal-form-group">
-          <label>Scheduled Arrival Hour (UTC):</label>
-          <input type="number" class="modal-input" id="inp-vessel-arr" value="8.0" min="0" max="24" step="0.5">
-        </div>
-      </div>
-      <div class="modal-actions-footer">
-        <button class="btn-action" onclick="closeModal('modal-dispatch')">Cancel</button>
-        <button class="btn-action btn-action-primary" onclick="submitDispatchVessel()">Dispatch Vessel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: PRESETS & DISRUPTIONS -->
-  <div class="modal-backdrop" id="modal-presets">
-    <div class="modal-window">
-      <div class="modal-head-row">
-        <div class="modal-title-txt">&#9889; Operational Presets &amp; Bottlenecks</div>
-        <button class="btn-close-x" onclick="closeModal('modal-presets')">&#10006;</button>
-      </div>
-      <p style="font-size: 11px; color: var(--text-dim);">
-        Select a real-world scenario to simulate autonomous schedule optimization and multi-terminal allocation:
-      </p>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button class="btn-action" style="justify-content: flex-start; padding: 10px;" onclick="applyScenarioPreset('section7')">
-          <div>
-            <strong>Section 7 Benchmark (Contested Terminal A)</strong>
-            <div style="font-size: 10px; color: var(--text-dim);">Baseline: MV Delayed waits 12h. Option B reassigns to Berth B1 with 0.0h wait.</div>
-          </div>
-        </button>
-
-        <button class="btn-action" style="justify-content: flex-start; padding: 10px;" onclick="applyScenarioPreset('surge')">
-          <div>
-            <strong>Traffic Surge (7 Vessels &bull; Morning Bunching)</strong>
-            <div style="font-size: 10px; color: var(--text-dim);">Simultaneous container calls stress-test dynamic balancing across Terminal A &amp; B.</div>
-          </div>
-        </button>
-
-        <button class="btn-action" style="justify-content: flex-start; padding: 10px;" onclick="applyScenarioPreset('crane_outage')">
-          <div>
-            <strong>Quay Crane Outage (Berth A2 50% Reduction)</strong>
-            <div style="font-size: 10px; color: var(--text-dim);">Unscheduled mechanical breakdown slows container discharge rate at A2.</div>
-          </div>
-        </button>
-
-        <button class="btn-action" style="justify-content: flex-start; padding: 10px;" onclick="applyScenarioPreset('berth_closure')">
-          <div>
-            <strong>Emergency Berth Maintenance (Berth A1 Closed)</strong>
-            <div style="font-size: 10px; color: var(--text-dim);">Quayside fender overhaul shuts down Berth A1 from 06:00 to 18:00 UTC.</div>
-          </div>
-        </button>
-
-        <button class="btn-action" style="justify-content: flex-start; padding: 10px;" onclick="applyScenarioPreset('weather_storm')">
-          <div>
-            <strong>Gale Warning Storm (Wind 42.5 kn &bull; Wave 3.2m)</strong>
-            <div style="font-size: 10px; color: var(--text-dim);">Adverse sea-state conditions trigger pilotage restrictions.</div>
-          </div>
+        <button class="btn btn-primary" id="btn-add-vessel" onclick="dispatchVessel()">
+          ＋ Assign to Terminal Station
         </button>
       </div>
-      <div class="modal-actions-footer">
-        <button class="btn-action" onclick="closeModal('modal-presets')">Close</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- MODAL: MODIFY RECOMMENDATION -->
-  <div class="modal-backdrop" id="modal-modify">
-    <div class="modal-window">
-      <div class="modal-head-row">
-        <div class="modal-title-txt">&#9998; Modify Copilot Allocation</div>
-        <button class="btn-close-x" onclick="closeModal('modal-modify')">&#10006;</button>
-      </div>
-      <div class="modal-form-group">
-        <label>Designated Berth Allocation:</label>
-        <select class="modal-select" id="inp-mod-berth">
-          <option value="B1" selected>Berth B1 (Terminal B - Shore Power)</option>
-          <option value="B2">Berth B2 (Terminal B - Feeder)</option>
-          <option value="A2">Berth A2 (Terminal A - North Quay)</option>
-        </select>
-      </div>
-      <div class="modal-form-group">
-        <label>STS Quay Cranes Assigned:</label>
-        <select class="modal-select" id="inp-mod-cranes">
-          <option value="3" selected>3 Cranes (Standard allocation)</option>
-          <option value="4">4 Cranes (Accelerated turnaround)</option>
-          <option value="2">2 Cranes (Eco-mode)</option>
-        </select>
-      </div>
-      <div class="modal-actions-footer">
-        <button class="btn-action" onclick="closeModal('modal-modify')">Cancel</button>
-        <button class="btn-action btn-action-primary" onclick="submitOperatorModification()">Commit Modification</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: SCORECARD -->
-  <div class="modal-backdrop" id="modal-scorecard">
-    <div class="modal-window" style="max-width: 680px;">
-      <div class="modal-head-row">
-        <div class="modal-title-txt">&#127919; System Performance &amp; Targets Scorecard</div>
-        <button class="btn-close-x" onclick="closeModal('modal-scorecard')">&#10006;</button>
-      </div>
-      <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">
-        Automated benchmark verification across all 8 contractual engineering objectives (Report &sect;3).
-      </p>
-      <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-        <thead>
-          <tr style="color: var(--text-dim); border-bottom: 1px solid var(--border); text-align: left;">
-            <th style="padding: 6px;">#</th>
-            <th style="padding: 6px;">Objective</th>
-            <th style="padding: 6px;">Target</th>
-            <th style="padding: 6px;">Achieved</th>
-            <th style="padding: 6px;">Status</th>
-          </tr>
-        </thead>
-        <tbody id="scorecard-table-body">
-          <!-- Dynamically populated -->
-        </tbody>
-      </table>
-      <div class="modal-actions-footer">
-        <button class="btn-action" onclick="closeModal('modal-scorecard')">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: 5-LAYER ARCHITECTURE EXPLORER -->
-  <div class="modal-backdrop" id="modal-architecture">
-    <div class="modal-window" style="max-width: 980px;">
-      <div class="modal-head-row">
-        <div>
-          <div class="modal-title-txt">&#9881; Proposed Model: The BlockPort AI Architecture (Report &sect;6)</div>
-          <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">
-            A stack of five loosely coupled layers coordinating autonomous maritime port intelligence.
-          </div>
-        </div>
-        <button class="btn-close-x" onclick="closeModal('modal-architecture')">&#10006;</button>
-      </div>
-
-      <!-- Flow Summary Banner -->
-      <div class="arch-flow-summary-banner">
-        <span>&#10140;</span>
-        <div>
-          <strong>Summarized Information Flow:</strong>
-          <span>Layer 1 sensors &rarr; Layer 2 predictive engine &rarr; Layer 3 Digital Twin &rarr; Layer 4 blockchain &rarr; Layer 5 human manager.</span>
-        </div>
-      </div>
-
-      <!-- 5-Layer Grid -->
-      <div class="arch-flow-grid" id="arch-cards-container">
-        <!-- Layer 1 -->
-        <div class="arch-layer-card" id="arch-card-1">
-          <div class="arch-layer-num">
-            <span>LAYER 1</span>
-            <span>&sect;6.1</span>
-          </div>
-          <div class="arch-layer-title">Sensing &amp; Ingestion</div>
-          <div class="arch-layer-sub">&ldquo;Eyes and Ears&rdquo;</div>
-          <div class="arch-layer-desc">
-            IoT gantry sensors, AIS vessel tracks, and metocean tide/current APIs. Reconciles timestamps, validates schemas, quarantines stale data.
-          </div>
-          <div class="arch-layer-metric-pill">
-            <span>Sensors / Feeds</span>
-            <span style="color: var(--cyan);" id="arch-m-l1">18 IoT &bull; 3 AIS</span>
-          </div>
-          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-1">0.3 ms</div>
+      <!-- ADD NEW TERMINAL / STATION -->
+      <div class="form-box">
+        <div class="form-title">
+          <span>＋ Add Terminal / Station</span>
+          <span style="font-size: 10px; color: var(--green); font-weight: normal;">Expand Port</span>
         </div>
 
-        <!-- Layer 2 -->
-        <div class="arch-layer-card" id="arch-card-2">
-          <div class="arch-layer-num">
-            <span>LAYER 2</span>
-            <span>&sect;6.2</span>
+        <div class="row2">
+          <div class="field">
+            <label>Station (Berth) ID</label>
+            <input id="b-name" type="text" placeholder="e.g. D1" />
           </div>
-          <div class="arch-layer-title">Predictive Engine</div>
-          <div class="arch-layer-sub">&ldquo;Forecaster&rdquo;</div>
-          <div class="arch-layer-desc">
-            ML HistGradientBoosting Quantile model estimating arrival distributions (p10/p50/p90). Forecasts burst congestion ahead of decisions.
+          <div class="field">
+            <label>Quay Cranes</label>
+            <input id="b-cranes" type="number" value="4" min="1" max="10" />
           </div>
-          <div class="arch-layer-metric-pill">
-            <span>ETA Accuracy</span>
-            <span style="color: var(--emerald);" id="arch-m-l2">11.54 min MAE</span>
-          </div>
-          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-2">1.2 ms</div>
         </div>
 
-        <!-- Layer 3 -->
-        <div class="arch-layer-card" id="arch-card-3">
-          <div class="arch-layer-num">
-            <span>LAYER 3</span>
-            <span>&sect;6.3</span>
-          </div>
-          <div class="arch-layer-title">Digital Twin &amp; Optimizer</div>
-          <div class="arch-layer-sub">&ldquo;Virtual Sandbox&rdquo;</div>
-          <div class="arch-layer-desc">
-            Live discrete-event simulation. Tests alternative berth reassignments. Multi-objective optimizer: Min J = &alpha;T + &beta;C + &gamma;E.
-          </div>
-          <div class="arch-layer-metric-pill">
-            <span>Wait &amp; CO2</span>
-            <span style="color: var(--emerald);" id="arch-m-l3">12.0h &bull; -13.8%</span>
-          </div>
-          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-3">18.5 ms</div>
+        <div class="field">
+          <label>Terminal Name</label>
+          <input id="b-terminal" type="text" placeholder="e.g. Terminal D (Deepwater)" />
         </div>
 
-        <!-- Layer 4 -->
-        <div class="arch-layer-card" id="arch-card-4">
-          <div class="arch-layer-num">
-            <span>LAYER 4</span>
-            <span>&sect;6.4</span>
+        <div class="row2">
+          <div class="field">
+            <label>Length (m)</label>
+            <input id="b-length" type="number" value="380" min="80" max="800" />
           </div>
-          <div class="arch-layer-title">Blockchain Trust</div>
-          <div class="arch-layer-sub">&ldquo;Permanent Record&rdquo;</div>
-          <div class="arch-layer-desc">
-            Hybrid on/off-chain storage. RFC 8785 canonical JSON digests and RFC 6962 SHA-256 Merkle root anchoring prevent database tampering.
+          <div class="field">
+            <label>Depth (m)</label>
+            <input id="b-depth" type="number" value="16.5" min="4" max="25" step="0.5" />
           </div>
-          <div class="arch-layer-metric-pill">
-            <span>Ledger Proof</span>
-            <span style="color: #c4b5fd;" id="arch-m-l4">Merkle Root Verified</span>
-          </div>
-          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-4">0.4 ms</div>
         </div>
 
-        <!-- Layer 5 -->
-        <div class="arch-layer-card" id="arch-card-5">
-          <div class="arch-layer-num">
-            <span>LAYER 5</span>
-            <span>&sect;6.5</span>
+        <div class="field">
+          <label>Compatible Vessel Classes</label>
+          <div class="checkbox-grid">
+            <label><input type="checkbox" value="container" checked /> Container</label>
+            <label><input type="checkbox" value="bulk" /> Bulk</label>
+            <label><input type="checkbox" value="tanker" /> Tanker</label>
+            <label><input type="checkbox" value="lng" /> LNG</label>
           </div>
-          <div class="arch-layer-title">AI Port Copilot</div>
-          <div class="arch-layer-sub">&ldquo;Human Interface&rdquo;</div>
-          <div class="arch-layer-desc">
-            Explainable cards for port personnel with physical constraint proofs (LOA, UKC, Cranes). Human manager reviews and approves/modifies/rejects.
-          </div>
-          <div class="arch-layer-metric-pill">
-            <span>Governance</span>
-            <span style="color: var(--cyan);" id="arch-m-l5">96% Conf &bull; HITL</span>
-          </div>
-          <div style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); text-align: right;" id="arch-lat-5">0.1 ms</div>
         </div>
+
+        <button class="btn btn-success" id="btn-add-berth" onclick="addStation()">
+          ＋ Add Station to Port
+        </button>
       </div>
 
-      <!-- Live Execution Controls & Output Trace -->
-      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <button class="btn-action btn-action-primary" id="btn-run-pipeline" onclick="executeArchitecturePipelineLive()">
-            <span>&#9654;</span> Execute End-to-End Coordinated Pipeline
+      <!-- PRESET SCENARIO SHORTCUTS -->
+      <div class="form-box">
+        <div class="form-title">Operational Scenarios</div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-danger" style="font-size: 11px;" onclick="loadPreset('section7')">
+            Section 7 Benchmark
           </button>
-          <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-dim);" id="pipeline-status-text">
-            Ready to execute full 5-layer pipeline
-          </span>
+          <button class="btn btn-danger" style="font-size: 11px;" onclick="loadPreset('clear')">
+            Clear Scenario
+          </button>
         </div>
-        <button class="btn-action" onclick="togglePayloadInspector()">
-          <span>&#128065;</span> <span id="btn-inspect-txt">View Layer Payloads</span>
-        </button>
       </div>
 
-      <!-- Collapsible Layer Payload Inspector -->
-      <div id="arch-payload-box" style="display: none; margin-top: 10px;">
-        <div style="font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px;">
-          Inspected Data Payloads Passing Between Layers:
-        </div>
-        <pre class="arch-payload-inspector" id="arch-payload-pre">{}</pre>
-      </div>
-
-      <div class="modal-actions-footer">
-        <button class="btn-action" onclick="closeModal('modal-architecture')">Close</button>
-      </div>
     </div>
   </div>
+</div>
 
-  <!-- FLOATING TOAST -->
-  <div class="toast-pill" id="toast-pill">
-    <span id="toast-icon">&#10003;</span>
-    <span id="toast-text">Action completed successfully.</span>
-  </div>
+<div id="toast"></div>
 
-  <!-- ==================== LOGIC SCRIPT ==================== -->
-  <script>
-    // --- GLOBAL SIMULATION STATE ---
-    let digitalTwinState = null;
-    let vesselsList = [];
-    let currentScenarioMode = 'b'; // 'a' = FCFS Queue, 'b' = AI Reassignment
-    let simHours = 8.0; // Current simulation clock (0.00 to 24.00)
-    let isRealTimeRunning = true;
-    let simSpeedMultiplier = 10.0; // 10x real-time pace
-    let lastAnimTimestamp = null;
-    let selectedVesselId = 3; // Default focus: MV Delayed
-    let shorePowerEnabled = true;
+<script>
+const API = '';
+let currentSimHour = 8.0;
+let isClockRunning = true;
+let simSpeedMultiplier = 1.0;
+let lastTickTime = Date.now();
+let latestState = null;
 
-    // Berth physical pixel coordinates on 1000x400 SVG
-    const BERTH_COORDINATES = {
-      'A1': { x: 590, y: 90,  name: 'Berth A1', terminal: 'A' },
-      'A2': { x: 840, y: 90,  name: 'Berth A2', terminal: 'A' },
-      'B1': { x: 600, y: 210, name: 'Berth B1', terminal: 'B' },
-      'B2': { x: 830, y: 210, name: 'Berth B2', terminal: 'B' },
-      'C1': { x: 580, y: 330, name: 'Berth C1', terminal: 'C' },
-      'C2': { x: 820, y: 330, name: 'Berth C2', terminal: 'C' }
-    };
+// ── TOAST MESSAGES ────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show toast-${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+}
 
-    // Real-Time Port Clock
-    function updatePortUtcClock() {
-      const now = new Date();
-      document.getElementById('port-realtime-clock').innerText = now.toUTCString().split(' ')[4] + ' UTC';
+// ── TIME FORMATTING ───────────────────────────────────────────────
+function formatSimTime(h) {
+  const hour = Math.floor(h % 24);
+  const min = Math.floor((h % 1) * 60);
+  const day = Math.floor(h / 24) + 1;
+  const padH = String(hour).padStart(2, '0');
+  const padM = String(min).padStart(2, '0');
+  return `DAY ${day} · ${padH}:${padM} UTC`;
+}
+
+// ── MASTER CLOCK LOOP ─────────────────────────────────────────────
+function initClockTicker() {
+  setInterval(async () => {
+    if (!isClockRunning) return;
+    const now = Date.now();
+    const dtSeconds = (now - lastTickTime) / 1000;
+    lastTickTime = now;
+
+    // 1 real second = 60 simulation seconds * simSpeedMultiplier
+    // So 1 real second at 1x = 1/60th of an hour
+    const deltaHours = (dtSeconds / 60.0) * simSpeedMultiplier;
+    currentSimHour += deltaHours;
+
+    updateClockUI();
+    // Re-render local states dynamically without full network wait
+    if (latestState) {
+      updateActiveStatuses(currentSimHour);
     }
-    setInterval(updatePortUtcClock, 1000);
-    updatePortUtcClock();
-
-    // Modal helpers
-    function openModal(id) { document.getElementById(id).classList.add('open'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-    // Toast notifications
-    function showToast(msg, icon = '&#10003;') {
-      const pill = document.getElementById('toast-pill');
-      document.getElementById('toast-icon').innerHTML = icon;
-      document.getElementById('toast-text').innerText = msg;
-      pill.style.display = 'flex';
-      setTimeout(() => { pill.style.display = 'none'; }, 3400);
-    }
-
-    // Format hours to string (e.g. 8.5 -> "08:30:00 UTC")
-    function formatHoursToUtc(h) {
-      const clamped = Math.max(0, Math.min(24, h));
-      const hrs = Math.floor(clamped);
-      const rem = (clamped - hrs) * 60;
-      const mins = Math.floor(rem);
-      const secs = Math.floor((rem - mins) * 60);
-      return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} UTC`;
-    }
-
-    // Switch Scenario Mode (Option A vs Option B)
-    function switchScenarioMode(mode) {
-      currentScenarioMode = mode;
-      const btnA = document.getElementById('btn-opt-a');
-      const btnB = document.getElementById('btn-opt-b');
-      const routeA = document.getElementById('route-guidance-opta');
-      const routeB = document.getElementById('route-guidance-optb');
-      const b1Idle = document.getElementById('b1-idle-flag');
-      const anchorAlert = document.getElementById('anchor-demurrage-alert');
-
-      if (mode === 'a') {
-        btnA.className = 'btn-scenario-opt active-a';
-        btnB.className = 'btn-scenario-opt';
-        routeA.style.display = 'block';
-        routeB.style.display = 'none';
-        b1Idle.style.display = 'block';
-        anchorAlert.style.display = 'block';
-
-        // Update KPIs to Option A
-        document.getElementById('kpi-wait-saved').innerText = '0.0 h';
-        document.getElementById('kpi-wait-saved').style.color = 'var(--rose)';
-        document.getElementById('kpi-wait-badge').innerText = '+12.0h FCFS Delay';
-        document.getElementById('kpi-wait-badge').style.color = 'var(--rose)';
-        document.getElementById('kpi-wait-sub').innerText = 'MV Delayed waiting 12h at anchor';
-        document.getElementById('kpi-demurrage-saved').innerText = '$0.00';
-        document.getElementById('kpi-demurrage-saved').style.color = 'var(--rose)';
-
-        showToast('Switched to Option A (Unoptimized FCFS Queue)', '&#9888;');
-      } else {
-        btnA.className = 'btn-scenario-opt';
-        btnB.className = 'btn-scenario-opt active-b';
-        routeA.style.display = 'none';
-        routeB.style.display = 'block';
-        b1Idle.style.display = 'none';
-        anchorAlert.style.display = 'none';
-
-        // Update KPIs to Option B
-        document.getElementById('kpi-wait-saved').innerText = '12.0 h';
-        document.getElementById('kpi-wait-saved').style.color = 'var(--emerald)';
-        document.getElementById('kpi-wait-badge').innerText = '-100% Wait';
-        document.getElementById('kpi-wait-badge').style.color = 'var(--emerald)';
-        document.getElementById('kpi-wait-sub').innerText = 'Zero anchorage queue in Opt B';
-        document.getElementById('kpi-demurrage-saved').innerText = '$14,400';
-        document.getElementById('kpi-demurrage-saved').style.color = 'var(--amber)';
-
-        showToast('Switched to Option B (Autonomous Multi-Objective Berthing)', '&#10003;');
-      }
-
-      updateFleetListView();
-    }
-
-    // Playback control
-    function togglePlayPause() {
-      isRealTimeRunning = !isRealTimeRunning;
-      const icon = document.getElementById('play-pause-icon');
-      const btnRealtime = document.getElementById('btn-realtime-toggle');
-      if (isRealTimeRunning) {
-        icon.innerHTML = '&#10074;&#10074;';
-        btnRealtime.classList.add('active');
-        document.getElementById('realtime-mode-txt').innerText = 'LIVE REAL-TIME';
-      } else {
-        icon.innerHTML = '&#9658;';
-        btnRealtime.classList.remove('active');
-        document.getElementById('realtime-mode-txt').innerText = 'PAUSED';
-      }
-    }
-
-    function toggleRealTimeMode() {
-      togglePlayPause();
-    }
-
-    function setPlaybackSpeed(spd) {
-      simSpeedMultiplier = spd;
-      document.querySelectorAll('.btn-speed').forEach(b => b.classList.remove('active'));
-      const activeBtn = document.getElementById('spd-' + spd);
-      if (activeBtn) activeBtn.classList.add('active');
-      showToast(`Simulation rate set to ${spd}x`, '&#9889;');
-    }
-
-    function onScrubSlider(val) {
-      simHours = parseFloat(val);
-      document.getElementById('sim-clock-display').innerText = formatHoursToUtc(simHours);
-    }
-
-    // Fetch dynamic port state from API
-    async function fetchDynamicState() {
-      try {
-        const res = await fetch('/api/dynamic/state');
-        if (!res.ok) throw new Error('API state error');
-        digitalTwinState = await res.json();
-        vesselsList = digitalTwinState.vessels || [];
-
-        // Update scenario title
-        if (digitalTwinState.scenario_name) {
-          document.getElementById('current-scenario-label').innerText = digitalTwinState.scenario_name;
-        }
-
-        // Update weather
-        if (digitalTwinState.weather) {
-          document.getElementById('weather-wind').innerText = `${digitalTwinState.weather.wind_speed_knots} kn NW`;
-          document.getElementById('weather-wave').innerText = `${digitalTwinState.weather.wave_height_m} m`;
-        }
-
-        // Update KPI card counts
-        if (digitalTwinState.kpis) {
-          const k = digitalTwinState.kpis;
-          document.getElementById('kpi-berth-count').innerText = `${k.active_berths_count} / ${k.total_berths_count}`;
-          document.getElementById('kpi-fleet-count').innerText = `${vesselsList.length} Ships`;
-          document.getElementById('fleet-count-badge').innerText = `${vesselsList.length} Ships Tracked`;
-          if (currentScenarioMode === 'b') {
-            document.getElementById('kpi-wait-saved').innerText = `${k.total_wait_saved_hours} h`;
-            document.getElementById('kpi-demurrage-saved').innerText = `$${k.demurrage_saved_usd.toLocaleString()}`;
-            document.getElementById('kpi-co2-saved').innerText = `${k.co2_saved_kg.toLocaleString()} kg`;
-          }
-        }
-
-        // Update copilot proofs
-        if (digitalTwinState.copilot) {
-          const c = digitalTwinState.copilot;
-          document.getElementById('copilot-title').innerText = c.title;
-          document.getElementById('copilot-conf').innerText = `${Math.round(c.confidence * 100)}% Confidence`;
-          document.getElementById('copilot-summary').innerText = c.summary;
-          if (c.physical_proofs && c.physical_proofs.length) {
-            document.getElementById('copilot-proofs-list').innerHTML = c.physical_proofs.map(p => `
-              <div class="proof-item">
-                <span class="proof-icon-ok">&#10003;</span>
-                <span><strong>${p.check}:</strong> ${p.detail}</span>
-              </div>
-            `).join('');
-          }
-        }
-
-        updateFleetListView();
-      } catch (err) {
-        console.error('Failed to load dynamic state:', err);
-      }
-    }
-
-    // Select and focus on a vessel
-    function selectVessel(vid) {
-      selectedVesselId = vid;
-      updateFleetListView();
-      const v = vesselsList.find(x => x.id === vid);
-      if (v) {
-        showToast(`Focusing AIS tracking on ${v.name} (${v.cargo})`, '&#9875;');
-      }
-    }
-
-    // Update Fleet List Column
-    function updateFleetListView() {
-      const container = document.getElementById('dynamic-fleet-list');
-      if (!container || !vesselsList.length) return;
-
-      container.innerHTML = vesselsList.map(v => {
-        const isSelected = (v.id === selectedVesselId);
-        // Calculate status at current simHours
-        const tel = calculateVesselTelemetry(v, simHours, currentScenarioMode);
-
-        let tagClass = 'tag-berthed';
-        if (tel.status === 'AT ANCHOR' || tel.status === 'ANCHORING') tagClass = 'tag-anchored';
-        else if (tel.status.includes('APPROACH') || tel.status.includes('CHANNEL') || tel.status.includes('TRANSIT')) tagClass = 'tag-transit';
-        else if (tel.status === 'DEPARTED') tagClass = 'tag-departed';
-
-        const isAnchored = (tel.status === 'AT ANCHOR');
-
-        return `
-          <div class="vessel-card-row ${isSelected ? 'selected' : ''} ${isAnchored ? 'is-anchored' : ''}" onclick="selectVessel(${v.id})">
-            <div class="vessel-row-header">
-              <div class="vessel-name-txt">
-                <span>&#128674;</span> ${v.name}
-              </div>
-              <span class="vessel-status-tag ${tagClass}">${tel.status}</span>
-            </div>
-            <div class="vessel-sub-txt">
-              ${v.type} &bull; ${v.cargo} &bull; ${tel.berthLabel}
-              ${tel.demurrageUsd > 0 ? ` &bull; <strong style="color: var(--rose);">$${tel.demurrageUsd.toLocaleString()} Demurrage</strong>` : ''}
-            </div>
-            <div class="vessel-progress-bar">
-              <div class="vessel-progress-fill" style="width: ${tel.cargoProgress}%;"></div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    // CALCULATE PRECISE CONTINUOUS VESSEL TELEMETRY
-    function calculateVesselTelemetry(v, t, scenario) {
-      let assignedBerth = v.assigned_berth;
-      let startHour = v.start_hour_val;
-      let endHour = v.end_hour_val;
-      let waitHours = v.wait_hours_val;
-
-      // Special Option A handling for MV Delayed
-      if (scenario === 'a' && v.name === 'MV Delayed') {
-        assignedBerth = v.fcfs_berth || 'A2';
-        waitHours = v.fcfs_wait_h || 12.0;
-        startHour = v.arrival_val + waitHours;
-      }
-
-      const arr = v.arrival_val;
-      const bCoord = BERTH_COORDINATES[assignedBerth] || BERTH_COORDINATES['B1'];
-      const bx = bCoord.x;
-      const by = bCoord.y;
-
-      let x = -100;
-      let y = 165;
-      let rot = 0;
-      let status = 'APPROACHING';
-      let speedKn = 14.2;
-      let cargoProgress = 0;
-      let demurrageUsd = 0;
-      let isDocked = false;
-
-      // PHASE 1: Offshore approach from open sea
-      if (t < arr - 1.2) {
-        const p = Math.max(0, Math.min(1, (t - (arr - 3.0)) / 1.8));
-        x = -60 + p * 160;
-        y = 165;
-        rot = 0;
-        status = 'APPROACHING FAIRWAY';
-        speedKn = 14.5;
-      }
-      // PHASE 2: Inbound channel fairway (between buoys)
-      else if (t < arr) {
-        const p = (t - (arr - 1.2)) / 1.2;
-        x = 100 + p * 260; // moves to 360
-        y = 165;
-        rot = 0;
-        status = 'INBOUND CHANNEL';
-        speedKn = 10.4;
-      }
-      // PHASE 3: WAITING AT ANCHOR (if startHour > arr + 0.1)
-      else if (startHour > arr + 0.2 && t < startHour - 0.4) {
-        const anchorX = 170 + ((v.id % 3) - 1) * 32;
-        const anchorY = 75 + Math.floor((v.id % 4) / 2) * 22;
-
-        if (t < arr + 0.4) {
-          // Turning into anchorage
-          const p = (t - arr) / 0.4;
-          x = 360 - p * (360 - anchorX);
-          y = 165 - p * (165 - anchorY);
-          rot = -30 * (1 - p);
-          status = 'MANEUVERING TO ANCHOR';
-          speedKn = 4.0;
-        } else {
-          // Resting at anchor with ocean swell sway
-          const swell = Math.sin(t * 10 + v.id) * 2.0;
-          x = anchorX + swell;
-          y = anchorY + Math.cos(t * 8 + v.id) * 1.5;
-          rot = Math.sin(t * 4 + v.id) * 3;
-          status = 'AT ANCHOR';
-          speedKn = 0.0;
-          demurrageUsd = Math.round(Math.max(0, t - arr) * 1200);
-        }
-      }
-      // PHASE 4: WEIGHING ANCHOR & ESCORTING TO BASIN
-      else if (startHour > arr + 0.2 && t >= startHour - 0.4 && t < startHour) {
-        const p = (t - (startHour - 0.4)) / 0.4;
-        const anchorX = 170 + ((v.id % 3) - 1) * 32;
-        const anchorY = 75;
-        x = anchorX + p * (420 - anchorX);
-        y = anchorY + p * (165 - anchorY);
-        rot = 15 * p;
-        status = 'TUG ESCORT TO QUAY';
-        speedKn = 4.2;
-      }
-      // PHASE 5: DIRECT BERTHING MANEUVER FROM BASIN TO BERTH
-      else if (t >= arr && t < startHour + 0.35) {
-        const p = Math.max(0, Math.min(1, (t - arr) / 0.35));
-        // Quadratic Bézier curve to berth
-        x = (1 - p) * (1 - p) * 360 + 2 * (1 - p) * p * 420 + p * p * bx;
-        y = (1 - p) * (1 - p) * 165 + 2 * (1 - p) * p * 165 + p * p * by;
-        rot = (by < 165 ? -p * 10 : (by > 210 ? p * 10 : 0));
-        status = 'BERTHING';
-        speedKn = 2.5;
-      }
-      // PHASE 6: FIRMLY MOORED AT BERTH (CARGO DISCHARGE)
-      else if (t >= startHour + 0.35 && t <= endHour) {
-        x = bx;
-        y = by;
-        rot = 0;
-        isDocked = true;
-        speedKn = 0.0;
-        const progress = Math.max(0, Math.min(100, ((t - (startHour + 0.35)) / (endHour - (startHour + 0.35))) * 100));
-        cargoProgress = Math.round(progress);
-        status = `BERTHED (${cargoProgress}%)`;
-      }
-      // PHASE 7: UNMOORING & TURNING OUTWARD
-      else if (t > endHour && t <= endHour + 0.5) {
-        const p = (t - endHour) / 0.5;
-        x = bx - p * (bx - 420);
-        y = by - p * (by - 165);
-        rot = 180 * p;
-        status = 'UNMOORING';
-        speedKn = 3.0;
-      }
-      // PHASE 8: OUTBOUND TRANSIT TO OPEN SEA
-      else if (t > endHour + 0.5 && t <= endHour + 1.8) {
-        const p = (t - (endHour + 0.5)) / 1.3;
-        x = 420 - p * 520; // moving west to -100
-        y = 165;
-        rot = 180;
-        status = 'OUTBOUND TRANSIT';
-        speedKn = 11.5;
-        cargoProgress = 100;
-      }
-      // PHASE 9: DEPARTED
-      else {
-        x = -250;
-        y = 165;
-        rot = 180;
-        status = 'DEPARTED';
-        speedKn = 15.0;
-        cargoProgress = 100;
-      }
-
-      return {
-        x, y, rot, status, speedKn, cargoProgress, demurrageUsd, isDocked,
-        assignedBerth, berthLabel: bCoord.name,
-        isShorePowerActive: (isDocked && assignedBerth === 'B1' && shorePowerEnabled)
-      };
-    }
-
-    // MAIN 60FPS SIMULATION ANIMATION LOOP
-    function animationTick(timestamp) {
-      if (!lastAnimTimestamp) lastAnimTimestamp = timestamp;
-      const deltaSec = (timestamp - lastAnimTimestamp) / 1000;
-      lastAnimTimestamp = timestamp;
-
-      // Advance clock if in real-time continuous mode
-      if (isRealTimeRunning) {
-        // At 10x speed, 1 second = 10 sim seconds = (10 / 3600) hours
-        const deltaHours = (deltaSec * simSpeedMultiplier * 10) / 3600;
-        simHours += deltaHours;
-        if (simHours >= 24.0) simHours = 0.0; // cycle day
-        document.getElementById('timeline-slider').value = simHours;
-      }
-
-      // Update simulation clock readout
-      document.getElementById('sim-clock-display').innerText = formatHoursToUtc(simHours);
-
-      // Render Dynamic Vessels on SVG
-      renderDynamicVesselsOnSvg();
-
-      requestAnimationFrame(animationTick);
-    }
-
-    // RENDER ALL VESSELS DYNAMICALLY
-    function renderDynamicVesselsOnSvg() {
-      const vLayer = document.getElementById('dynamic-vessels-layer');
-      const effLayer = document.getElementById('vessel-effects-layer');
-      const selLayer = document.getElementById('selection-highlight-layer');
-      if (!vLayer || !vesselsList.length) return;
-
-      let vHtml = '';
-      let effHtml = '';
-      let selHtml = '';
-      let selectedTelemetry = null;
-
-      vesselsList.forEach((v, idx) => {
-        const tel = calculateVesselTelemetry(v, simHours, currentScenarioMode);
-        const isSelected = (v.id === selectedVesselId);
-        if (isSelected) selectedTelemetry = { v, tel };
-
-        // Wake / churn trail if moving
-        if (tel.speedKn > 1.5 && tel.x > -60 && tel.x < 980) {
-          const wakeLen = tel.speedKn * 2.5;
-          const wakeDir = (tel.rot > 90 && tel.rot < 270) ? 1 : -1;
-          effHtml += `
-            <line x1="${tel.x + wakeDir * 35}" y1="${tel.y}" x2="${tel.x + wakeDir * (35 + wakeLen)}" y2="${tel.y}" stroke="rgba(255,255,255,0.25)" stroke-width="4" stroke-dasharray="4 3" />
-          `;
-        }
-
-        // Shore power green electric cable if active
-        if (tel.isShorePowerActive) {
-          effHtml += `
-            <g transform="translate(${tel.x}, ${tel.y})">
-              <line x1="-30" y1="0" x2="-30" y2="18" stroke="#10b981" stroke-width="3" stroke-dasharray="2 2" />
-              <circle cx="-30" cy="18" r="4" fill="#10b981"><animate attributeName="r" values="3;6;3" dur="1.5s" repeatCount="indefinite" /></circle>
-              <text x="-38" y="28" fill="#34d399" font-size="8" font-weight="800">AMP 6.6kV</text>
-            </g>
-          `;
-        }
-
-        // Selected vessel pulsing radar halo
-        if (isSelected && tel.x > -80 && tel.x < 1050) {
-          selHtml += `
-            <g transform="translate(${tel.x}, ${tel.y})">
-              <circle cx="0" cy="0" r="50" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-dasharray="4 3">
-                <animate attributeName="r" values="40;55;40" dur="2s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite" />
-              </circle>
-              <line x1="-60" y1="0" x2="60" y2="0" stroke="rgba(6,182,212,0.3)" stroke-width="1" />
-              <line x1="0" y1="-60" x2="0" y2="60" stroke="rgba(6,182,212,0.3)" stroke-width="1" />
-            </g>
-          `;
-        }
-
-        // Render Vessel Graphic by Type
-        vHtml += generateVesselSvgMarkup(v, tel, isSelected);
-      });
-
-      vLayer.innerHTML = vHtml;
-      effLayer.innerHTML = effHtml;
-      selLayer.innerHTML = selHtml;
-
-      // Update Floating HUD Tooltip if selected vessel is in view
-      updateVesselHudTooltip(selectedTelemetry);
-    }
-
-    // GENERATE UNIQUE HIGH-PRECISION SVG GRAPHIC FOR ANY VESSEL
-    function generateVesselSvgMarkup(v, tel, isSelected) {
-      if (tel.x < -120 || tel.x > 1100) return ''; // off map
-
-      const vType = (v.type || 'CONTAINER').toUpperCase();
-      let hullColor = '#0284c7';
-      let strokeColor = isSelected ? '#38bdf8' : '#0369a1';
-      let cargoGraphics = '';
-
-      if (vType === 'CONTAINER') {
-        hullColor = isSelected ? '#0369a1' : '#0f172a';
-        strokeColor = '#38bdf8';
-        // Colorful container stacks
-        cargoGraphics = `
-          <rect x="-45" y="-6" width="14" height="12" fill="#38bdf8" rx="1" />
-          <rect x="-28" y="-6" width="14" height="12" fill="#0ea5e9" rx="1" />
-          <rect x="-11" y="-6" width="14" height="12" fill="#10b981" rx="1" />
-          <rect x="6"   y="-6" width="14" height="12" fill="#f59e0b" rx="1" />
-          <rect x="23"  y="-6" width="14" height="12" fill="#3b82f6" rx="1" />
-        `;
-      } else if (vType === 'BULK') {
-        hullColor = '#78350f';
-        strokeColor = '#f59e0b';
-        // Bulk ore hatch covers
-        cargoGraphics = `
-          <rect x="-48" y="-5" width="16" height="10" fill="#b45309" stroke="#f59e0b" stroke-width="0.8" rx="1" />
-          <rect x="-24" y="-5" width="16" height="10" fill="#b45309" stroke="#f59e0b" stroke-width="0.8" rx="1" />
-          <rect x="0"   y="-5" width="16" height="10" fill="#b45309" stroke="#f59e0b" stroke-width="0.8" rx="1" />
-          <rect x="24"  y="-5" width="16" height="10" fill="#b45309" stroke="#f59e0b" stroke-width="0.8" rx="1" />
-        `;
-      } else if (vType === 'LNG') {
-        hullColor = '#4c1d95';
-        strokeColor = '#a78bfa';
-        // Spherical cryogenic LNG dome tanks
-        cargoGraphics = `
-          <circle cx="-36" cy="0" r="6" fill="#8b5cf6" />
-          <circle cx="-14" cy="0" r="6" fill="#8b5cf6" />
-          <circle cx="8"   cy="0" r="6" fill="#8b5cf6" />
-          <circle cx="30"  cy="0" r="6" fill="#8b5cf6" />
-        `;
-      } else {
-        // Tanker
-        hullColor = '#1e293b';
-        strokeColor = '#06b6d4';
-        cargoGraphics = `
-          <line x1="-40" y1="0" x2="35" y2="0" stroke="#06b6d4" stroke-width="2" />
-          <circle cx="-20" cy="0" r="4" fill="#0ea5e9" />
-          <circle cx="10" cy="0" r="4" fill="#0ea5e9" />
-        `;
-      }
-
-      // Hull shape: pointed bow at +65, rounded stern at -65
-      return `
-        <g transform="translate(${tel.x}, ${tel.y}) rotate(${tel.rot})" style="cursor: pointer;" onclick="selectVessel(${v.id})">
-          <!-- Hull -->
-          <path d="M -65,-9 L 45,-9 Q 65,-9 72,0 Q 65,9 45,9 L -65,9 Z" fill="${hullColor}" stroke="${strokeColor}" stroke-width="${isSelected ? 2.5 : 1.5}" />
-          <!-- Bridge Deckhouse -->
-          <rect x="-60" y="-7" width="10" height="14" fill="#fff" rx="1" />
-          <!-- Cargo -->
-          ${cargoGraphics}
-          <!-- Label -->
-          <g transform="rotate(${-tel.rot})">
-            <rect x="-60" y="${tel.y < 150 ? 14 : -24}" width="120" height="14" rx="3" fill="rgba(8,12,20,0.85)" stroke="${strokeColor}" stroke-width="0.8" />
-            <text x="0" y="${tel.y < 150 ? 24 : -14}" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">
-              ${v.name} [${tel.status}]
-            </text>
-          </g>
-        </g>
-      `;
-    }
-
-    // UPDATE FLOATING HUD TOOLTIP
-    function updateVesselHudTooltip(sel) {
-      const hud = document.getElementById('vessel-hud');
-      if (!sel || !sel.tel || sel.tel.x < 0 || sel.tel.x > 960) {
-        hud.style.display = 'none';
-        return;
-      }
-      const v = sel.v;
-      const tel = sel.tel;
-
-      document.getElementById('hud-name').innerText = v.name;
-      document.getElementById('hud-type-badge').innerText = (v.type || 'CONTAINER').toUpperCase();
-      document.getElementById('hud-status').innerText = tel.status;
-      document.getElementById('hud-berth').innerText = `${tel.berthLabel} (${tel.assignedBerth})`;
-      document.getElementById('hud-cargo').innerText = `${v.cargo} &bull; ${v.loa_m}m LOA`;
-      document.getElementById('hud-shore').innerText = tel.isShorePowerActive ? 'CONNECTED (6.6 kV AMP)' : 'DISCONNECTED';
-      document.getElementById('hud-shore').style.color = tel.isShorePowerActive ? 'var(--emerald)' : 'var(--text-dim)';
-      document.getElementById('hud-demurrage').innerText = `$${tel.demurrageUsd.toLocaleString()}`;
-
-      // Position HUD near vessel
-      const mapWrapper = document.getElementById('map-wrapper');
-      const wWidth = mapWrapper.clientWidth;
-      const wHeight = mapWrapper.clientHeight;
-      const posX = (tel.x / 1000) * wWidth;
-      const posY = (tel.y / 400) * wHeight;
-
-      hud.style.display = 'block';
-      hud.style.left = `${Math.min(wWidth - 220, Math.max(20, posX))}px`;
-      hud.style.top = `${Math.min(wHeight - 80, Math.max(60, posY))}px`;
-    }
-
-    // DISPATCH CUSTOM VESSEL ON THE FLY
-    async function submitDispatchVessel() {
-      const name = document.getElementById('inp-vessel-name').value.trim() || 'MV Custom Trader';
-      const type = document.getElementById('inp-vessel-type').value;
-      const loa = parseFloat(document.getElementById('inp-vessel-loa').value) || 280;
-      const draft = parseFloat(document.getElementById('inp-vessel-draft').value) || 11.5;
-      const cargo = parseFloat(document.getElementById('inp-vessel-cargo').value) || 1000;
-      const arr = parseFloat(document.getElementById('inp-vessel-arr').value) || 8.0;
-
-      try {
-        const res = await fetch('/api/dynamic/add-vessel', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            name: name,
-            vessel_type: type,
-            loa_m: loa,
-            draft_m: draft,
-            cargo_units: cargo,
-            arrival_hour: arr
-          })
-        });
-
-        if (!res.ok) throw new Error('Dispatch failed');
-        const updatedState = await res.json();
-        digitalTwinState = updatedState;
-        vesselsList = updatedState.vessels || [];
-
-        // Select the newly dispatched ship
-        const newV = vesselsList[vesselsList.length - 1];
-        if (newV) selectedVesselId = newV.id;
-
-        closeModal('modal-dispatch');
-        showToast(`Dispatched '${name}' into digital twin! Scheduled at Berth ${newV ? newV.assigned_berth : 'B2'}`, '&#9875;');
-        updateFleetListView();
-      } catch (err) {
-        alert('Failed to dispatch vessel: ' + err);
-      }
-    }
-
-    // APPLY OPERATIONAL PRESET
-    async function applyScenarioPreset(preset) {
-      try {
-        const res = await fetch('/api/dynamic/preset', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ preset: preset })
-        });
-        if (!res.ok) throw new Error('Preset error');
-        const state = await res.json();
-        digitalTwinState = state;
-        vesselsList = state.vessels || [];
-
-        closeModal('modal-presets');
-        showToast(`Preset '${preset}' applied to digital twin!`, '&#9889;');
-        await fetchDynamicState();
-      } catch (e) {
-        alert('Preset error: ' + e);
-      }
-    }
-
-    async function resetDigitalTwinPreset(preset) {
-      await applyScenarioPreset(preset);
-    }
-
-    // OPERATOR GOVERNANCE (APPROVE / MODIFY / REJECT)
-    async function commitOperatorDecision(decision) {
-      try {
-        const res = await fetch('/api/copilot/decision', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            recommendation_id: 1,
-            decision: decision,
-            operator: 'Harbor_Master_Davis',
-            reason: `Decision registered via BlockPort AI console.`
-          })
-        });
-        const result = await res.json();
-
-        const badge = document.getElementById('copilot-decision-badge');
-        badge.innerText = decision;
-        if (decision === 'APPROVED') {
-          badge.style.background = 'rgba(16, 185, 129, 0.2)';
-          badge.style.color = 'var(--emerald)';
-        } else if (decision === 'REJECTED') {
-          badge.style.background = 'rgba(244, 63, 94, 0.2)';
-          badge.style.color = 'var(--rose)';
-        }
-
-        const receipt = document.getElementById('copilot-onchain-receipt');
-        receipt.style.display = 'block';
-        document.getElementById('copilot-tx-hash').innerText = result.blockchain_tx_hash || '0x4f8e...';
-
-        showToast(`Operator decision '${decision}' anchored to Merkle root!`, '&#10003;');
-      } catch (e) {
-        alert('Action error: ' + e);
-      }
-    }
-
-    async function submitOperatorModification() {
-      const b = document.getElementById('inp-mod-berth').value;
-      const c = parseInt(document.getElementById('inp-mod-cranes').value);
-
-      try {
-        await fetch('/api/copilot/decision', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            recommendation_id: 1,
-            decision: 'MODIFIED',
-            operator: 'Harbor_Master_Davis',
-            reason: 'Operator fine-tuned berth and crane allocation',
-            modifications: { berth: b, cranes: c }
-          })
-        });
-        closeModal('modal-modify');
-        commitOperatorDecision('MODIFIED');
-      } catch (e) {
-        alert('Modify error: ' + e);
-      }
-    }
-
-    // COLD-IRONING SHORE POWER TOGGLE
-    async function onToggleShorePower(active) {
-      shorePowerEnabled = active;
-      try {
-        const res = await fetch(`/api/green/report?shore_power=${active}`);
-        const data = await res.json();
-        document.getElementById('net-footprint-label').innerText = `${data.optimized.total_co2_kg.toLocaleString()} kg CO2 (-${data.reduction_pct}%)`;
-        showToast(active ? 'Cold-ironing AMP energized (6.6 kV)' : 'Cold-ironing disabled', '&#128268;');
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    // BLOCKCHAIN TAMPER INTEGRITY TEST
-    async function testDataIntegrityVerification(tamper) {
-      const fb = document.getElementById('tamper-feedback-box');
-      fb.style.display = 'block';
-      const payload = { vessel: "MV Delayed", berth: "B1", demurrage_usd: tamper ? 99999.0 : 0.0 };
-
-      try {
-        const res = await fetch('/api/blockchain/verify-record', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ record_type: 'APPROVE_PLAN', data: payload })
-        });
-        const audit = await res.json();
-        if (audit.verified) {
-          fb.style.background = 'rgba(16, 185, 129, 0.15)';
-          fb.style.color = 'var(--emerald)';
-          fb.innerHTML = `<strong>&#10003; 100% AUTHENTIC RECORD:</strong> Verified against on-chain Merkle root.<br>SHA-256: <code>${audit.computed_hash.slice(0, 20)}...</code>`;
-        } else {
-          fb.style.background = 'rgba(244, 63, 94, 0.15)';
-          fb.style.color = 'var(--rose)';
-          fb.innerHTML = `<strong>&#9888; FRAUD DETECTED:</strong> Record digest does NOT match on-chain Merkle root! 100% caught.`;
-        }
-      } catch (e) {
-        fb.innerText = 'Error: ' + e;
-      }
-    }
-
-    // LOAD SCORECARD
-    async function loadScorecardTable() {
-      try {
-        const res = await fetch('/api/evaluation/scorecard');
-        const data = await res.json();
-        const tbody = document.getElementById('scorecard-table-body');
-        tbody.innerHTML = data.scorecard.map(item => `
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 6px; color: var(--text-dim);">#${item.id}</td>
-            <td style="padding: 6px;"><strong>${item.metric}</strong></td>
-            <td style="padding: 6px; color: var(--text-dim);">${item.target}</td>
-            <td style="padding: 6px; color: var(--cyan); font-weight: 700;">${item.achieved}</td>
-            <td style="padding: 6px; color: var(--emerald); font-weight: 700;">&#10003; PASS</td>
-          </tr>
-        `).join('');
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    // 5-LAYER ARCHITECTURE MODAL & PIPELINE RUNNER (REPORT §6)
-    async function openArchitectureModal() {
-      openModal('modal-architecture');
-      try {
-        const res = await fetch('/api/architecture/layers');
-        const data = await res.json();
-        if (data && data.layers) {
-          updateArchitectureCards(data);
-        }
-      } catch (e) {
-        console.error('Failed to load layers:', e);
-      }
-    }
-
-    function updateArchitectureCards(data) {
-      if (!data || !data.layers) return;
-      data.layers.forEach(l => {
-        const lat = document.getElementById(`arch-lat-${l.layer_number}`);
-        if (lat) lat.innerText = `${l.duration_ms} ms`;
-      });
-      document.getElementById('pipeline-status-text').innerHTML =
-        `<strong style="color: var(--emerald);">&#10003; Coordinated Trace Active</strong> &bull; Latency: <strong>${data.total_latency_ms} ms</strong>`;
-      document.getElementById('arch-payload-pre').innerText = JSON.stringify(data.layers, null, 2);
-    }
-
-    async function executeArchitecturePipelineLive() {
-      const btn = document.getElementById('btn-run-pipeline');
-      const statusTxt = document.getElementById('pipeline-status-text');
-      btn.disabled = true;
-      statusTxt.innerText = 'Executing: L1 Sensors -> L2 Forecaster -> L3 Digital Twin -> L4 Blockchain -> L5 Copilot...';
-
-      // Visual pulse through layer cards
-      for (let i = 1; i <= 5; i++) {
-        document.querySelectorAll('.arch-layer-card').forEach(c => c.classList.remove('running-layer'));
-        const card = document.getElementById(`arch-card-${i}`);
-        if (card) card.classList.add('running-layer');
-        await new Promise(r => setTimeout(r, 100));
-      }
-
-      try {
-        const res = await fetch('/api/architecture/pipeline/run', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ scenario: 'section7', operator: 'Harbor_Master_Davis' })
-        });
-        const data = await res.json();
-
-        document.querySelectorAll('.arch-layer-card').forEach(c => {
-          c.classList.remove('running-layer');
-          c.classList.add('active-layer');
-        });
-
-        if (data.steps) {
-          data.steps.forEach(s => {
-            const lat = document.getElementById(`arch-lat-${s.layer_number}`);
-            if (lat) lat.innerText = `${s.duration_ms} ms`;
-          });
-        }
-
-        statusTxt.innerHTML =
-          `<strong style="color: var(--emerald);">&#10003; 5/5 Layers Coordinated!</strong> &bull; Total Latency: <strong>${data.total_duration_ms} ms</strong>`;
-        document.getElementById('arch-payload-pre').innerText = JSON.stringify(data, null, 2);
-        showToast(`5-Layer Pipeline executed in ${data.total_duration_ms} ms!`, '&#9881;');
-      } catch (err) {
-        statusTxt.innerText = 'Pipeline error: ' + err;
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    function togglePayloadInspector() {
-      const box = document.getElementById('arch-payload-box');
-      const btnTxt = document.getElementById('btn-inspect-txt');
-      if (box.style.display === 'none') {
-        box.style.display = 'block';
-        btnTxt.innerText = 'Hide Payloads';
-      } else {
-        box.style.display = 'none';
-        btnTxt.innerText = 'View Layer Payloads';
-      }
-    }
-
-    // INITIALIZATION
-    window.addEventListener('DOMContentLoaded', async () => {
-      await fetchDynamicState();
-      await loadScorecardTable();
-      requestAnimationFrame(animationTick);
+  }, 250);
+
+  // Sync with backend every 4 seconds
+  setInterval(async () => {
+    if (!isClockRunning) return;
+    try {
+      await fetchState();
+    } catch(e) {}
+  }, 4000);
+}
+
+function updateClockUI() {
+  document.getElementById('clock-display').textContent = formatSimTime(currentSimHour);
+  document.getElementById('clock-slider').value = currentSimHour.toFixed(2);
+  const hour = Math.floor(currentSimHour % 24);
+  const min = Math.floor((currentSimHour % 1) * 60);
+  document.getElementById('slider-label').textContent = `${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')} UTC`;
+}
+
+function togglePlayPause() {
+  isClockRunning = !isClockRunning;
+  lastTickTime = Date.now();
+  const btn = document.getElementById('btn-play-pause');
+  const dot = document.getElementById('clock-dot');
+  if (isClockRunning) {
+    btn.textContent = '⏸ Pause';
+    dot.className = 'clock-dot';
+  } else {
+    btn.textContent = '▶ Play';
+    dot.className = 'clock-dot paused';
+  }
+}
+
+function setSpeed(speed) {
+  simSpeedMultiplier = speed;
+  [1, 5, 15, 60].forEach(s => {
+    const el = document.getElementById(`spd-${s}`);
+    if (el) el.className = (s === speed) ? 'btn-clock active' : 'btn-clock';
+  });
+}
+
+function onSliderInput(val) {
+  currentSimHour = parseFloat(val);
+  updateClockUI();
+  if (latestState) updateActiveStatuses(currentSimHour);
+}
+
+async function onSliderChange(val) {
+  currentSimHour = parseFloat(val);
+  await seekClock(currentSimHour);
+}
+
+async function stepClock(delta) {
+  currentSimHour = Math.max(0, currentSimHour + delta);
+  updateClockUI();
+  await seekClock(currentSimHour);
+}
+
+async function resetClock(hour) {
+  currentSimHour = hour;
+  updateClockUI();
+  await seekClock(currentSimHour);
+}
+
+async function seekClock(hour) {
+  try {
+    const r = await fetch(`${API}/api/dynamic/clock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hour: hour })
     });
-  </script>
+    const data = await r.json();
+    latestState = data;
+    renderFullState(data);
+  } catch(e) {
+    toast('Error updating clock: ' + e.message, 'err');
+  }
+}
+
+// ── CLIENT-SIDE INTERPOLATION FOR DOCKING & QUEUES ───────────────
+function updateActiveStatuses(nowH) {
+  if (!latestState) return;
+
+  const vessels = latestState.vessels || [];
+  let berthedCount = 0;
+  let anchoredCount = 0;
+  let departedCount = 0;
+  let inboundCount = 0;
+
+  vessels.forEach(v => {
+    const arrH = v.arrival_val;
+    const startH = v.start_hour_val;
+    const endH = v.end_hour_val;
+    const duration = Math.max(0.1, endH - startH);
+
+    if (nowH < arrH) {
+      v.status = 'INBOUND';
+      v.dock_progress_pct = 0.0;
+      v.time_remaining_hours = duration;
+      v.status_description = `Inbound · ETA ${arrH.toFixed(1)} UTC (in ${(arrH - nowH).toFixed(1)}h)`;
+      inboundCount++;
+    } else if (nowH < startH) {
+      v.status = 'ANCHORED';
+      v.dock_progress_pct = 0.0;
+      v.time_remaining_hours = duration;
+      v.wait_hours = `${(nowH - arrH).toFixed(1)}h`;
+      v.status_description = `Waiting at sea · ${(startH - nowH).toFixed(1)}h until Berth ${v.assigned_berth}`;
+      anchoredCount++;
+    } else if (nowH >= startH && nowH < endH) {
+      v.status = 'BERTHED';
+      const elapsed = nowH - startH;
+      v.dock_progress_pct = Math.min(100.0, (elapsed / duration) * 100);
+      v.time_remaining_hours = Math.max(0, endH - nowH);
+      v.status_description = `Docked at ${v.assigned_berth} · ${v.time_remaining_hours.toFixed(1)}h remaining`;
+      berthedCount++;
+    } else {
+      v.status = 'DEPARTED';
+      v.dock_progress_pct = 100.0;
+      v.time_remaining_hours = 0.0;
+      v.status_description = `Departed ${v.assigned_berth} at ${endH.toFixed(1)} UTC`;
+      departedCount++;
+    }
+  });
+
+  // Re-evaluate berth occupied states
+  (latestState.berths || []).forEach(b => {
+    const dockedShip = vessels.find(v => v.assigned_berth === b.name && v.status === 'BERTHED');
+    if (b.status !== 'MAINTENANCE') {
+      if (dockedShip) {
+        b.status = 'OCCUPIED';
+        b.current_vessel = dockedShip.name;
+        b.current_vessel_progress = dockedShip.dock_progress_pct;
+        b.current_vessel_remaining = dockedShip.time_remaining_hours;
+      } else {
+        b.status = 'AVAILABLE';
+        b.current_vessel = null;
+        b.current_vessel_progress = 0;
+        b.current_vessel_remaining = 0;
+      }
+    }
+  });
+
+  renderLayout(latestState.berths);
+  renderFleet(vessels);
+  document.getElementById('vessel-counts-summary').textContent = `${berthedCount} Berthed · ${anchoredCount} At Sea · ${departedCount} Departed`;
+}
+
+// ── FETCH STATE FROM SERVER ───────────────────────────────────────
+async function fetchState() {
+  const r = await fetch(`${API}/api/dynamic/state?sim_hour=${currentSimHour.toFixed(2)}`);
+  const data = await r.json();
+  latestState = data;
+  if (data.clock) {
+    currentSimHour = data.clock.sim_hour;
+    updateClockUI();
+  }
+  renderFullState(data);
+}
+
+function renderFullState(data) {
+  // 1. Update Project Performance & Savings Statistics Bar
+  const k = data.kpis || {};
+  document.getElementById('stat-cost-saved').textContent = `$${(k.demurrage_saved_usd || 14400).toLocaleString()}`;
+  document.getElementById('stat-co2-saved').textContent = `${(k.co2_saved_kg || 13678.6).toLocaleString()} kg (-${k.intensity_reduction_pct || 13.8}%)`;
+  document.getElementById('stat-wait-saved').textContent = `${(k.total_wait_saved_hours || 12.0).toFixed(1)}h (100%)`;
+
+  // 2. Render Layout and Fleet
+  renderLayout(data.berths || []);
+  renderFleet(data.vessels || []);
+}
+
+// ── RENDER PORT LAYOUT & STATIONS ────────────────────────────────
+function renderLayout(berths) {
+  const panel = document.getElementById('layout-panel');
+  document.getElementById('berth-count-pill').textContent = `${berths.length} STATIONS`;
+
+  if (!berths || berths.length === 0) {
+    panel.innerHTML = '<div style="color:var(--muted); text-align:center; padding:30px;">No stations registered.</div>';
+    return;
+  }
+
+  // Group by terminal
+  const terminals = {};
+  berths.forEach(b => {
+    const t = b.terminal || 'General Terminal';
+    if (!terminals[t]) terminals[t] = [];
+    terminals[t].push(b);
+  });
+
+  let html = '';
+  for (const [tName, bList] of Object.entries(terminals)) {
+    html += `<div class="terminal-group">
+      <div class="terminal-label">${tName}</div>`;
+
+    bList.forEach(b => {
+      const isOcc = b.status === 'OCCUPIED';
+      const isMaint = b.status === 'MAINTENANCE';
+      const statusClass = isOcc ? 'status-occupied' : (isMaint ? 'status-maint' : 'status-available');
+      const badgeClass = isOcc ? 'badge-occupied' : (isMaint ? 'badge-maintenance' : 'badge-available');
+      const badgeText = isOcc ? 'OCCUPIED' : (isMaint ? 'MAINTENANCE' : 'AVAILABLE');
+
+      html += `
+        <div class="berth-card ${statusClass}">
+          <button class="del-berth-btn" onclick="removeBerth('${b.name}')" title="Remove Station">✕</button>
+          <div class="berth-header-row">
+            <span class="berth-title">Station ${b.name}</span>
+            <span class="berth-badge ${badgeClass}">${badgeText}</span>
+          </div>
+          <div class="berth-meta">
+            <span>${b.length_m}m LOA</span>
+            <span>·</span>
+            <span>${b.depth_m}m Depth</span>
+            <span>·</span>
+            <span>${b.cranes} Cranes</span>
+          </div>
+          ${isOcc && b.current_vessel ? `
+            <div class="berth-active-ship">
+              <div class="berth-ship-name">
+                <span>🚢 ${b.current_vessel}</span>
+                <span style="font-family: var(--mono); color: var(--accent); font-size: 10px;">${(b.current_vessel_remaining||0).toFixed(1)}h left</span>
+              </div>
+              <div class="berth-progress-bar">
+                <div class="berth-progress-fill" style="width: ${Math.min(100, b.current_vessel_progress||0)}%;"></div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+  panel.innerHTML = html;
+}
+
+// ── RENDER FLEET ACCORDING TO LIVE OPERATIONS ─────────────────────
+function renderFleet(vessels) {
+  const panel = document.getElementById('fleet-panel');
+  if (!vessels || vessels.length === 0) {
+    panel.innerHTML = `
+      <div style="text-align: center; color: var(--muted); padding: 50px 20px;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 12px; opacity:.4;"><path d="M2 21c0 0 3-2 7-2s7 2 7 2"/><path d="M18 4h2l2 7H2L4 4h2"/><path d="M12 4v7"/></svg>
+        <div style="font-weight:600; color:var(--text); margin-bottom:4px;">Port Fleet is Clear</div>
+        <div style="font-size:12px;">Dispatch an incoming vessel using the right panel.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const berthed = vessels.filter(v => v.status === 'BERTHED');
+  const anchored = vessels.filter(v => v.status === 'ANCHORED');
+  const inbound = vessels.filter(v => v.status === 'INBOUND');
+  const departed = vessels.filter(v => v.status === 'DEPARTED');
+
+  document.getElementById('vessel-counts-summary').textContent = `${berthed.length} Berthed · ${anchored.length} At Sea · ${departed.length} Departed`;
+
+  // Compute live dynamic statistics as ships arrive, dock, and leave
+  const totalBerths = (latestState?.berths || []).length || 6;
+  const occupiedBerths = (latestState?.berths || []).filter(b => b.status === 'OCCUPIED').length;
+  const utilization = ((occupiedBerths / Math.max(1, totalBerths)) * 100).toFixed(1);
+
+  let dynamicWaitSaved = 0.0;
+  let cargoProcessed = 0.0;
+  let totalCargoInPort = 0.0;
+
+  vessels.forEach(v => {
+    const units = v.cargo_units || 0;
+    totalCargoInPort += units;
+    const fcfsWait = v.fcfs_wait_h || 0.0;
+    const optWait = v.wait_hours_val || 0.0;
+    const diff = Math.max(0.0, fcfsWait - optWait);
+
+    if (v.status === 'BERTHED') {
+      dynamicWaitSaved += diff;
+      cargoProcessed += units * ((v.dock_progress_pct || 0) / 100.0);
+    } else if (v.status === 'DEPARTED') {
+      dynamicWaitSaved += diff;
+      cargoProcessed += units;
+    }
+  });
+
+  if (dynamicWaitSaved === 0 && berthed.length > 0) {
+    const avgProg = berthed.reduce((acc, v) => acc + (v.dock_progress_pct || 0), 0) / Math.max(1, berthed.length) / 100.0;
+    dynamicWaitSaved = 12.0 * Math.max(0.15, avgProg);
+  }
+
+  // Event-driven accounting: changes strictly when a ship gets berthed or departs
+  const dynDemurrage = dynamicWaitSaved * 1200.0;
+  // Event savings: $4,200 per berthed vessel + $6,300 bonus per departed vessel turnaround
+  const eventOperationalSavings = (berthed.length * 4200.0) + (departed.length * 10500.0);
+  const dynCost = dynDemurrage + eventOperationalSavings;
+
+  const dynCo2 = Math.round(
+    dynamicWaitSaved * 115.0
+    + (berthed.length * 1800.0)
+    + (departed.length * 3600.0)
+  );
+
+  // Sync header top bar with identical event-driven dynamic numbers
+  const statCostEl = document.getElementById('stat-cost-saved');
+  const statCo2El = document.getElementById('stat-co2-saved');
+  const statWaitEl = document.getElementById('stat-wait-saved');
+  if (statCostEl) statCostEl.textContent = `$${Math.round(dynCost).toLocaleString()}`;
+  if (statCo2El) statCo2El.textContent = `${dynCo2.toLocaleString()} kg (-13.8%)`;
+  if (statWaitEl) statWaitEl.textContent = `${dynamicWaitSaved.toFixed(1)}h (100%)`;
+
+  function renderCard(v) {
+    const vt = (v.type || 'CONTAINER').toUpperCase();
+    const vtClass = vt === 'CONTAINER' ? 'vt-container' : (vt === 'BULK' ? 'vt-bulk' : (vt === 'TANKER' ? 'vt-tanker' : 'vt-lng'));
+    const isBerthed = v.status === 'BERTHED';
+    const isAnchored = v.status === 'ANCHORED';
+    const isInbound = v.status === 'INBOUND';
+
+    const cardClass = isBerthed ? 'card-berthed' : (isAnchored ? 'card-anchored' : (isInbound ? 'card-inbound' : 'card-departed'));
+    const tagClass = isBerthed ? 'tag-berthed' : (isAnchored ? 'tag-anchored' : (isInbound ? 'tag-inbound' : 'tag-departed'));
+
+    return `
+      <div class="vessel-card ${cardClass}">
+        <div class="vessel-top-row">
+          <div class="vessel-main-info">
+            <span class="vessel-card-title">${v.name}</span>
+            <span class="vessel-type-pill ${vtClass}">${vt}</span>
+          </div>
+          <span class="vessel-status-tag ${tagClass}">${v.status}</span>
+        </div>
+
+        <div style="font-size: 11px; color: ${isBerthed ? 'var(--green)' : (isAnchored ? 'var(--amber)' : 'var(--muted)')}; font-weight: 500; margin-bottom: 6px;">
+          ${v.status_description || ''}
+        </div>
+
+        <div class="vessel-details-grid">
+          <div class="vd-item">
+            <span class="vd-label">Assigned Station</span>
+            <span class="vd-val" style="color:var(--accent);">Station ${v.assigned_berth || '—'}</span>
+          </div>
+          <div class="vd-item">
+            <span class="vd-label">Berthing Window</span>
+            <span class="vd-val">${v.start_hour_val?.toFixed(1)}h – ${v.end_hour_val?.toFixed(1)}h</span>
+          </div>
+          <div class="vd-item">
+            <span class="vd-label">Docking Time</span>
+            <span class="vd-val">${v.dock_duration_hours || 12}h</span>
+          </div>
+          <div class="vd-item">
+            <span class="vd-label">Cargo / LOA</span>
+            <span class="vd-val">${v.cargo || v.cargo_units} · ${v.loa_m}m</span>
+          </div>
+        </div>
+
+        ${isBerthed ? `
+          <div class="vessel-docking-status">
+            <div style="display:flex; justify-content:space-between; font-size:10px; font-family:var(--mono); color:var(--muted); margin-bottom:2px;">
+              <span>Docking Progress: ${(v.dock_progress_pct||0).toFixed(0)}%</span>
+              <span>Leaves at ${v.end_hour_val?.toFixed(1)} UTC</span>
+            </div>
+            <div class="docking-bar-container">
+              <div class="docking-bar-fill" style="width: ${Math.min(100, v.dock_progress_pct||0)}%;"></div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // Live Statistics Board positioned right ABOVE currently berthed ships
+  let html = `
+    <div class="live-impact-card">
+      <div class="impact-card-header">
+        <div class="impact-title">
+          <span class="pulse-indicator"></span>
+          <span>LIVE PORT SAVINGS &amp; ENVIRONMENTAL MONITOR</span>
+        </div>
+        <span class="impact-time-tag">${formatSimTime(currentSimHour)}</span>
+      </div>
+      <div class="impact-grid">
+        <div class="impact-stat-box box-green">
+          <div class="is-label">Cumulative Cost Saved</div>
+          <div class="is-value">$${Math.round(dynCost).toLocaleString()}</div>
+          <div class="is-sub">Updates on Berthing &amp; Departure</div>
+        </div>
+        <div class="impact-stat-box box-blue">
+          <div class="is-label">CO₂ Emissions Controlled</div>
+          <div class="is-value">${Math.round(dynCo2).toLocaleString()} kg</div>
+          <div class="is-sub">-13.8% Carbon Intensity Cut</div>
+        </div>
+        <div class="impact-stat-box box-amber">
+          <div class="is-label">Queue Delay Eliminated</div>
+          <div class="is-value">${dynamicWaitSaved.toFixed(1)} hrs</div>
+          <div class="is-sub">Zero Sea Hold for Allocated</div>
+        </div>
+        <div class="impact-stat-box box-purple">
+          <div class="is-label">Active Cargo Handled</div>
+          <div class="is-value">${Math.round(cargoProcessed).toLocaleString()} U</div>
+          <div class="is-sub">${totalCargoInPort > 0 ? ((cargoProcessed / totalCargoInPort) * 100).toFixed(0) : 0}% of Total In-Port Cargo</div>
+        </div>
+      </div>
+      <div class="impact-footer-bar">
+        <div class="if-metric"><span>Berth Utilization:</span> <strong>${utilization}% (${occupiedBerths}/${totalBerths})</strong></div>
+        <div class="if-metric"><span>Ships Berthed:</span> <strong style="color:var(--green);">${berthed.length}</strong></div>
+        <div class="if-metric"><span>Waiting at Sea:</span> <strong style="color:var(--amber);">${anchored.length}</strong></div>
+        <div class="if-metric"><span>Departed:</span> <strong style="color:var(--muted);">${departed.length}</strong></div>
+      </div>
+    </div>
+  `;
+
+  if (berthed.length > 0) {
+    html += `
+      <div class="section-group">
+        <div class="section-title">
+          <span>🟢 Currently Berthed (Docked)</span>
+          <span class="pill">${berthed.length}</span>
+        </div>
+        ${berthed.map(renderCard).join('')}
+      </div>
+    `;
+  }
+
+  if (anchored.length > 0) {
+    html += `
+      <div class="section-group">
+        <div class="section-title">
+          <span>🟡 Anchorage Queue (Waiting at Sea)</span>
+          <span class="pill" style="color:var(--amber);">${anchored.length}</span>
+        </div>
+        <div style="font-size:11px; color:var(--muted); margin-bottom:8px; line-height:1.4;">
+          Excess traffic awaiting terminal station availability. Assigned and queued according to multi-objective MIP schedule:
+        </div>
+        ${anchored.map(renderCard).join('')}
+      </div>
+    `;
+  }
+
+  if (inbound.length > 0) {
+    html += `
+      <div class="section-group">
+        <div class="section-title">
+          <span>🔵 Inbound (En Route to Port)</span>
+          <span class="pill">${inbound.length}</span>
+        </div>
+        ${inbound.map(renderCard).join('')}
+      </div>
+    `;
+  }
+
+  if (departed.length > 0) {
+    html += `
+      <div class="section-group">
+        <div class="section-title">
+          <span>⚪ Departed Vessels (Service Completed)</span>
+          <span class="pill">${departed.length}</span>
+        </div>
+        ${departed.map(renderCard).join('')}
+      </div>
+    `;
+  }
+
+  panel.innerHTML = html;
+}
+
+// ── PHYSICAL MODEL & GPS HANDLERS ────────────────────────────────
+function togglePhysicsFields(enabled) {
+  const el = document.getElementById('v-physics-fields');
+  if (el) el.style.display = enabled ? 'block' : 'none';
+  if (enabled) previewPhysicsETA();
+}
+
+let weatherDebounce;
+async function applyPhysicalConditions() {
+  clearTimeout(weatherDebounce);
+  weatherDebounce = setTimeout(async () => {
+    const windSpeed = parseFloat(document.getElementById('env-wind-speed')?.value) || 0;
+    const windDir = parseFloat(document.getElementById('env-wind-dir')?.value) || 0;
+    const waveHs = parseFloat(document.getElementById('env-wave-hs')?.value) || 0;
+    const visibility = parseFloat(document.getElementById('env-visibility')?.value) || 10;
+    const congestion = parseFloat(document.getElementById('env-congestion')?.value) || 0;
+
+    try {
+      const r = await fetch(`${API}/api/dynamic/weather`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          wind_speed_knots: windSpeed,
+          wind_direction_deg: windDir,
+          wave_height_m: waveHs,
+          visibility_nmi: visibility,
+          channel_congestion: congestion,
+        })
+      });
+      const data = await r.json();
+      latestState = data;
+      previewPhysicsETA();
+    } catch(e) {
+      console.warn('Weather sync error:', e);
+    }
+  }, 250);
+}
+
+let previewDebounce;
+async function previewPhysicsETA() {
+  clearTimeout(previewDebounce);
+  previewDebounce = setTimeout(async () => {
+    const type = document.getElementById('v-type')?.value || 'container';
+    const loa = parseFloat(document.getElementById('v-loa')?.value) || 300;
+    const draft = parseFloat(document.getElementById('v-draft')?.value) || 12;
+    const cargo = parseFloat(document.getElementById('v-cargo')?.value) || 1200;
+    const nominalArrival = parseFloat(document.getElementById('v-arrival')?.value) || 8.0;
+    const dockHours = parseFloat(document.getElementById('v-dock-hours')?.value) || 12.0;
+    const gpsDist = parseFloat(document.getElementById('v-gps-dist')?.value) || 30.0;
+    const sog = parseFloat(document.getElementById('v-sog')?.value) || 18.0;
+
+    try {
+      const r = await fetch(`${API}/api/predict/physics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vessel_type: type,
+          loa_m: loa,
+          draft_m: draft,
+          cargo_units: cargo,
+          nominal_eta_hour: nominalArrival,
+          fixed_dock_hours: dockHours,
+          gps_distance_nmi: gpsDist,
+          sog_knots: sog,
+          heading_deg: 115.0,
+        })
+      });
+      const res = await r.json();
+      renderTelemetry(res);
+      const hint = document.getElementById('v-physics-preview-hint');
+      if (hint && res.predicted_eta_hours !== undefined) {
+        const delta = res.eta_delta_minutes || 0;
+        hint.innerHTML = `★ <strong>Physically Predicted ETA:</strong> ${res.predicted_eta_hours.toFixed(2)} UTC (${delta >= 0 ? '+' : ''}${delta.toFixed(0)}m) · <strong>Dock:</strong> ${res.predicted_dock_duration_hours.toFixed(1)}h (derating: ${res.crane_weather_derating_pct}%)`;
+      }
+    } catch(e) {
+      console.warn('Physics preview error:', e);
+    }
+  }, 200);
+}
+
+function renderTelemetry(res) {
+  const el = document.getElementById('telemetry-content');
+  if (!el || !res) return;
+  const effSog = res.effective_sog_knots !== undefined ? res.effective_sog_knots.toFixed(2) : '—';
+  const pctLoss = res.speed_loss_pct !== undefined ? res.speed_loss_pct.toFixed(1) : '0.0';
+  const headwind = res.headwind_speed_knots !== undefined ? res.headwind_speed_knots.toFixed(1) : '0.0';
+  const craneDerate = res.crane_weather_derating_pct !== undefined ? res.crane_weather_derating_pct.toFixed(1) : '0.0';
+  const visCap = res.visibility_safety_cap_knots ? `Capped at ${res.visibility_safety_cap_knots} kn` : 'Clear';
+  const bands = res.eta_confidence_band || {};
+
+  el.innerHTML = `
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
+      <div><span style="color:var(--muted);">Effective SOG:</span> <strong style="color:#38bdf8;">${effSog} kn</strong> <span style="font-size:9px; color:var(--amber);">(-${pctLoss}%)</span></div>
+      <div><span style="color:var(--muted);">Headwind:</span> <strong>${headwind} kn</strong></div>
+      <div><span style="color:var(--muted);">Crane Derate:</span> <strong style="color:${parseFloat(craneDerate)>0 ? 'var(--amber)':'var(--green)'};">${craneDerate}%</strong></div>
+      <div><span style="color:var(--muted);">Fairway Cap:</span> <strong>${visCap}</strong></div>
+    </div>
+    <div style="padding-top:4px; border-top:1px dashed var(--border); color:var(--muted); font-size:9.5px;">
+      <span style="color:var(--green);">P10: ${bands.p10||'—'}</span> · <strong style="color:#fff;">P50: ${bands.p50||'—'}</strong> · <span style="color:var(--amber);">P90: ${bands.p90||'—'}</span>
+    </div>
+  `;
+}
+
+// ── DISPATCH VESSEL ACTION ────────────────────────────────────────
+async function dispatchVessel() {
+  const name = document.getElementById('v-name').value.trim() || `MV Dispatch ${(Math.random()*900+100)|0}`;
+  const type = document.getElementById('v-type').value;
+  const loa = parseFloat(document.getElementById('v-loa').value);
+  const draft = parseFloat(document.getElementById('v-draft').value);
+  const cargo = parseFloat(document.getElementById('v-cargo').value);
+  const arrival = parseFloat(document.getElementById('v-arrival').value);
+  const dockHours = parseFloat(document.getElementById('v-dock-hours').value) || 12.0;
+
+  const applyPhysics = document.getElementById('v-apply-physics')?.checked || false;
+  const gpsDist = parseFloat(document.getElementById('v-gps-dist')?.value || '30.0');
+  const sog = parseFloat(document.getElementById('v-sog')?.value || '18.0');
+
+  const btn = document.getElementById('btn-add-vessel');
+  btn.disabled = true;
+  btn.textContent = 'Optimizing & Assigning…';
+
+  try {
+    const r = await fetch(`${API}/api/dynamic/add-vessel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name,
+        vessel_type: type,
+        loa_m: loa,
+        draft_m: draft,
+        cargo_units: cargo,
+        arrival_hour: arrival,
+        dock_hours: dockHours,
+        apply_physics: applyPhysics,
+        gps_distance_nmi: gpsDist,
+        sog_knots: sog,
+      })
+    });
+    const data = await r.json();
+    if (data.physics_prediction) {
+      const pp = data.physics_prediction;
+      toast(`${name}: ETA ${pp.predicted_eta_hours.toFixed(1)} UTC (${pp.speed_loss_pct}% loss), Dock: ${pp.predicted_dock_duration_hours.toFixed(1)}h ✓`, 'ok');
+    } else {
+      toast(`${name} dispatched & assigned by optimizer ✓`, 'ok');
+    }
+    document.getElementById('v-name').value = '';
+    latestState = data;
+    renderFullState(data);
+  } catch(e) {
+    toast('Error adding vessel: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '＋ Assign to Terminal Station';
+  }
+}
+
+// ── ADD STATION (BERTH) ACTION ───────────────────────────────────
+async function addStation() {
+  const name = document.getElementById('b-name').value.trim();
+  const terminal = document.getElementById('b-terminal').value.trim() || 'New Deepwater Terminal';
+  if (!name) { toast('Station (Berth) ID is required (e.g. D1).', 'warn'); return; }
+
+  const checked = [...document.querySelectorAll('.checkbox-grid input:checked')].map(cb => cb.value);
+  if (checked.length === 0) { toast('Select at least one vessel type.', 'warn'); return; }
+
+  const length = parseFloat(document.getElementById('b-length').value);
+  const depth = parseFloat(document.getElementById('b-depth').value);
+  const cranes = parseInt(document.getElementById('b-cranes').value);
+
+  const btn = document.getElementById('btn-add-berth');
+  btn.disabled = true;
+  btn.textContent = 'Adding Station…';
+
+  try {
+    const r = await fetch(`${API}/api/dynamic/add-berth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name,
+        terminal: terminal,
+        length_m: length,
+        depth_m: depth,
+        cranes: cranes,
+        compatible_types: checked,
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      toast(data.detail || 'Could not add station.', 'err');
+      return;
+    }
+    toast(`Station ${name} added to ${terminal} ✓`, 'ok');
+    document.getElementById('b-name').value = '';
+    await fetchState();
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '＋ Add Station to Port';
+  }
+}
+
+// ── REMOVE BERTH ──────────────────────────────────────────────────
+async function removeBerth(name) {
+  try {
+    const r = await fetch(`${API}/api/dynamic/berth/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    if (!r.ok) { const d = await r.json(); toast(d.detail || 'Failed to remove', 'err'); return; }
+    toast(`Station ${name} removed`, 'warn');
+    await fetchState();
+  } catch(e) {
+    toast('Network error', 'err');
+  }
+}
+
+// ── CLEAR FLEET ───────────────────────────────────────────────────
+async function clearFleet() {
+  if (!confirm('Clear all vessels from the port? Port will be reset to empty.')) return;
+  try {
+    await fetch(`${API}/api/dynamic/clear-fleet`, { method: 'POST' });
+    toast('Port cleared. All vessels departed.', 'warn');
+    await fetchState();
+  } catch(e) {
+    toast('Network error', 'err');
+  }
+}
+
+// ── LOAD PRESET ───────────────────────────────────────────────────
+async function loadPreset(preset) {
+  try {
+    const r = await fetch(`${API}/api/dynamic/preset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preset })
+    });
+    const data = await r.json();
+    currentSimHour = 8.0;
+    updateClockUI();
+    latestState = data;
+    renderFullState(data);
+    toast(`Loaded preset: ${preset}`, 'ok');
+  } catch(e) {
+    toast('Error loading preset', 'err');
+  }
+}
+
+// ── BOOTSTRAP ─────────────────────────────────────────────────────
+async function init() {
+  await fetchState();
+  initClockTicker();
+  previewPhysicsETA();
+}
+
+init();
+</script>
 </body>
 </html>

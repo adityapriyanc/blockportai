@@ -24,6 +24,7 @@ class TwinVessel:
     arrival: datetime  # arrival time used by the simulation (actual, scheduled or predicted)
     predicted_arrival: Optional[datetime] = None  # ETA model output, for planning vs execution
     allowed_berths: Optional[FrozenSet[str]] = None  # None = any compatible berth
+    fixed_service_hours: Optional[float] = None  # Explicit docking duration
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,8 @@ class TwinBerth:
                 and v.draft_m <= self.depth_m)
 
     def service_hours(self, v: TwinVessel) -> float:
+        if v.fixed_service_hours is not None and v.fixed_service_hours > 0:
+            return float(v.fixed_service_hours)
         return service_time_hours(v.vessel_type, v.cargo_units, self.cranes)
 
 
