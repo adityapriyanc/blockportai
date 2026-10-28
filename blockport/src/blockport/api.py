@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from . import __version__
 from .architecture import architecture_pipeline
 from .blockchain.auditor import BlockchainAuditor
-from .blockchain.ledger import BlockPortLedger
+from .blockchain.ledger import BlockPortLedger, BlockchainNetwork
 from .config import get_settings
 from .copilot.generator import PortCopilot
 from .copilot.workflow import GovernanceWorkflow
@@ -42,6 +42,13 @@ copilot = PortCopilot()
 optimizer = BerthOptimizer()
 green_engine = GreenPortIntelligence()
 dynamic_engine = DynamicPortEngine(ledger=ledger)
+
+# Multi-instance Blockchain Network
+network = BlockchainNetwork(name="BlockPort Multi-Terminal Network")
+network.add_node("Port-Authority")
+network.add_node("Terminal-A")
+network.add_node("Customs-Hub")
+network.connect_all()
 
 
 def _get_live_section7_data():
@@ -665,6 +672,54 @@ def copilot_decision(payload: Dict[str, Any] = Body(...)) -> dict:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+
+
+@app.get("/api/blockchain/network")
+def blockchain_network_status() -> dict:
+    """Fetch live status of all nodes in the multi-instance blockchain network."""
+    return {
+        "network_name": network.name,
+        "nodes": network.network_status(print_output=False),
+        "all_agree": network.all_chains_agree(),
+        "total_nodes": len(network.nodes()),
+    }
+
+
+@app.post("/api/blockchain/network/broadcast")
+def blockchain_network_broadcast(payload: Optional[Dict[str, Any]] = Body(None)) -> dict:
+    """Broadcast a new transaction/block from a specific node to all peers."""
+    data_in = payload or {}
+    node_id = data_in.get("node_id", "Port-Authority")
+    rec_type = data_in.get("record_type", "MILESTONE_ACTION")
+    subject_table = data_in.get("subject_table", "port_calls")
+    subject_id = int(data_in.get("subject_id", 101))
+    record_data = data_in.get("data", {"action": "VERIFIED"})
+    if node_id not in network:
+        raise HTTPException(status_code=404, detail=f"Node '{node_id}' not found in network.")
+    tx, blk = network.broadcast_tx(node_id, rec_type, subject_table, subject_id, record_data)
+    return {
+        "status": "BROADCASTED",
+        "origin_node": node_id,
+        "block_index": blk.index,
+        "block_hash": blk.block_hash,
+        "tx_hash": tx.tx_hash,
+        "signer_address": tx.operator_address,
+        "signature_valid": tx.verify(),
+        "network_nodes": network.network_status(print_output=False),
+    }
+
+
+@app.post("/api/blockchain/network/sync")
+def blockchain_network_sync() -> dict:
+    """Run consensus sync across all nodes."""
+    results = network.sync_all()
+    return {
+        "status": "SYNCED",
+        "consensus_results": results,
+        "all_agree": network.all_chains_agree(),
+        "network_nodes": network.network_status(print_output=False),
+    }
 
 @app.get("/api/blockchain/chain")
 def blockchain_chain() -> dict:
